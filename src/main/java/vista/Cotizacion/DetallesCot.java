@@ -13,6 +13,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
@@ -546,7 +548,12 @@ public class DetallesCot extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnVolverActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVolverActionPerformed
-         HistorialCot h = new HistorialCot(jPanel1, true); // Añadir el segundo parámetro
+         HistorialCot h = null;
+        try {
+            h = new HistorialCot(jPanel1, true); // Añadir el segundo parámetro
+        } catch (SQLException ex) {
+            Logger.getLogger(DetallesCot.class.getName()).log(Level.SEVERE, null, ex);
+        }
         h.setSize(1290, 730);
         h.setLocation(0, 0);
         jPanel1.removeAll();

@@ -29,6 +29,7 @@ import modelo.Conexion;
 import controlador.Ctrl_Cotizacion;
 import java.awt.Container;
 import java.text.SimpleDateFormat;
+import static java.time.Clock.offset;
 import java.util.ArrayList;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
@@ -40,9 +41,9 @@ public class HistorialCot extends javax.swing.JPanel {
     private JPanel contenedor;
     private Ctrl_Cotizacion controlador;
 
-    public HistorialCot(Container contenedor, boolean par) {
+    public HistorialCot(Container contenedor, boolean par) throws SQLException {
         this.contenedor = (JPanel) contenedor;
-        this.controlador = new Ctrl_Cotizacion(null); // Ajustar según necesites pasar la vista
+        Ctrl_Cotizacion controlador = new Ctrl_Cotizacion();
         initComponents();
         configurarTabla();
         cargarDatosIniciales();
@@ -134,14 +135,17 @@ public class HistorialCot extends javax.swing.JPanel {
         sorter.setSortKeys(sortKeys);
     }
 
-    public void cargarDatosIniciales() {
+    private void cargarDatosIniciales() throws SQLException {
         DefaultTableModel modelo = (DefaultTableModel) tablaM.getModel();
         modelo.setRowCount(0);
-        System.out.println("Cargando datos iniciales...");
-        List<Cotizacion> cotizaciones = controlador.obtenerCotizaciones();
-        System.out.println("Número de cotizaciones obtenidas: " + cotizaciones.size());
+
+        // Usa valores por defecto
+        int offset = 0;
+        int limit = 50;
+
+        List<Cotizacion> cotizaciones = controlador.obtenerCotizaciones(offset, limit);
         for (Cotizacion cotizacion : cotizaciones) {
-            agregarCotizacion(cotizacion); // Usar el método ajustado
+            agregarCotizacion(cotizacion);
         }
     }
 
@@ -180,22 +184,16 @@ public class HistorialCot extends javax.swing.JPanel {
 
     private class ButtonRenderer extends DefaultTableCellRenderer {
 
-        private final Color textColor = new Color(46, 49, 82);
-        private final Font fontNormal = new Font("Tahoma", Font.PLAIN, 14);
-        private final Font fontBold = new Font("Tahoma", Font.BOLD, 14);
-
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            c.setForeground(isSelected ? Color.WHITE : Color.BLACK);
-            c.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
-            c.setFont(isSelected ? fontBold : fontNormal);
-            setHorizontalAlignment(CENTER);
-            setText("Ver");
-            setBorder(BorderFactory.createLineBorder(new Color(153, 153, 153), 1));
-            tablaM.setRowHeight(23);
-            return c;
+            JButton button = new JButton("Ver");
+            button.setBackground(isSelected ? table.getSelectionBackground() : new Color(46, 49, 82));
+            button.setForeground(Color.WHITE);
+            button.setFont(new Font("Tahoma", Font.BOLD, 12));
+            button.setFocusPainted(false);
+            button.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            return button;
         }
     }
 

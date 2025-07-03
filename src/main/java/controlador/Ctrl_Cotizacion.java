@@ -1,67 +1,42 @@
 package controlador;
 
-import modelo.Cotizacion;
-import modelo.Conexion;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import modelo.*;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.sql.Date;
 import java.util.List;
-import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import vista.Cotizacion.cotizacion;
 
 public class Ctrl_Cotizacion {
 
-    private cotizacion vista;
-    private CotizacionDAO cotizacionDAO;
-    private static final int USUARIO_ID = 1; // ID del usuario logueado (ajustar según autenticación)
+    public static final int USUARIO_ID = 1; // O obtén este valor de la sesión
 
-    public Ctrl_Cotizacion(cotizacion vista) {
-        this.vista = vista;
+    private final CotizacionDAO cotizacionDAO;
+
+    public Ctrl_Cotizacion() {
         this.cotizacionDAO = new CotizacionDAO();
     }
 
-   public int guardarCotizacion(Integer clienteCodigo, DefaultTableModel modeloTabla, double totalGeneral) {
-    System.out.println("Intentando guardar cotización - Cliente: " + clienteCodigo + ", Total: " + totalGeneral + ", Filas: " + modeloTabla.getRowCount());
+    public int guardarCotizacion(Integer clienteCodigo, DefaultTableModel modelo, double total) throws SQLException {
+        CotizacionDTO dto = new CotizacionDTO();
+        dto.setClienteCodigo(clienteCodigo);
+        dto.setFecha(new java.util.Date());
+        dto.setUsuarioId(USUARIO_ID);
+        dto.setTotal(total);
 
-    if (modeloTabla.getRowCount() == 0 || clienteCodigo == null) {
-        return -1;
-    }
-
-    List<Cotizacion> cotizaciones = new ArrayList<>();
-    for (int i = 0; i < modeloTabla.getRowCount(); i++) {
-        Cotizacion cot = new Cotizacion();
-        try {
-            // Configurar los datos de la cotización...
-            cotizaciones.add(cot);
-        } catch (Exception e) {
-            return -1;
+        // Convertir tabla a lista de productos
+        for (int i = 0; i < modelo.getRowCount(); i++) {
+            ProductoCotizacionDTO producto = new ProductoCotizacionDTO(
+                    modelo.getValueAt(i, 0).toString(),
+                    modelo.getValueAt(i, 1).toString(),
+                    Integer.parseInt(modelo.getValueAt(i, 2).toString()),
+                    Double.parseDouble(modelo.getValueAt(i, 3).toString().replace("$", ""))
+            );
+            dto.getProductos().add(producto);
         }
+
+        return cotizacionDAO.guardarCotizacionDTO(dto);
     }
 
-    try {
-        int idCotizacion = cotizacionDAO.guardarCotizaciones(cotizaciones);
-        return idCotizacion;
-    } catch (Exception e) {
-        return -1;
-    }
-}
-
-   
-    private boolean verificarClienteExistente(int clienteCodigo) {
-        try (Connection con = Conexion.getConnection(); PreparedStatement pstmt = con.prepareStatement("SELECT 1 FROM cliente WHERE codigo = ?")) {
-            pstmt.setInt(1, clienteCodigo);
-            return pstmt.executeQuery().next();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public List<Cotizacion> obtenerCotizaciones() {
-        return cotizacionDAO.obtenerCotizaciones();
+    public List<Cotizacion> obtenerCotizaciones(int offset, int limit) throws SQLException {
+        return cotizacionDAO.obtenerCotizaciones(offset, limit);
     }
 }

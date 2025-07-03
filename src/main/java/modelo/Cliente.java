@@ -5,6 +5,7 @@ package modelo;
  * @author Personal
  */
 public class Cliente {
+
     private int codigo; // Cambiado de id_cliente a codigo
     private String identificacion;
     private String nombre;
@@ -14,6 +15,7 @@ public class Cliente {
     private String departamento;
     private String municipio;
     private String direccion;
+    private String estado;
     private boolean activo;
 
     public Cliente(int codigo, String identificacion, String nombre, String apellido, String telefono, String telefono2, String departamento, String municipio, String direccion, boolean activo) {
@@ -27,6 +29,23 @@ public class Cliente {
         this.municipio = municipio;
         this.direccion = direccion;
         this.activo = activo;
+        this.estado = estado;
+    }
+
+    public int getCodigo() {
+        return codigo;
+    }
+
+    public void setCodigo(int codigo) {
+        this.codigo = codigo;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
     }
 
     public int getId_cliente() {

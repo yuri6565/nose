@@ -4,9 +4,22 @@
  */
 package vista.Cotizacion;
 
+import controlador.Ctrl_Producto;
 import java.awt.Frame;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import controlador.Ctrl_Producto;
+import controlador.Ctrl_Producto;
+import java.awt.Frame;
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 
 /**
  *
@@ -19,37 +32,44 @@ public class InsertarCoti extends javax.swing.JDialog {
     private String unidad;
     private String cantidad;
     private String valorUnitario;
+    private Ctrl_Producto controladorProducto;
 
-    // Constructor original para nuevo producto
     public InsertarCoti(Frame parent, boolean modal, String unidad1, String valorUnitario1) {
         super(parent, modal);
         initComponents();
         CargarUnidadMed();
-        // Opcional: precargar valor unitario si se proporciona
-        if (!valorUnitario1.isEmpty()) {
+        configurarFiltroNumerico(txtValorUni);
+        configurarFiltroNumerico(txtCantidad);
+
+        if (valorUnitario1 != null && !valorUnitario1.isEmpty()) {
             txtValorUni.setText(valorUnitario1);
         }
     }
 
+    // Constructor original para nuevo producto
+    public InsertarCoti(Frame parent, boolean modal, String unidad1, String valorUnitario1, Ctrl_Producto ctrlProducto) {
+        this(parent, modal, unidad1, valorUnitario1); // Reutiliza el constructor básico
+        this.controladorProducto = ctrlProducto;
+    }
+
     // Constructor para edición
-    public InsertarCoti(java.awt.Frame parent, boolean modal, String producto, String unidad, String cantidad, String valorUnitario) {
+    public InsertarCoti(Frame parent, boolean modal, String producto, String unidad,
+            String cantidad, String valorUnitario) {
         super(parent, modal);
         initComponents();
         CargarUnidadMed();
-        // Precargar los campos con los datos
-        this.producto = producto;
-        this.unidad = unidad;
-        this.cantidad = cantidad;
-        this.valorUnitario = valorUnitario;
         txtProducto.setText(producto);
-        for (int i = 0; i < combox_Unidad.getItemCount(); i++) {
-            if (combox_Unidad.getItemAt(i).equals(unidad)) {
-                combox_Unidad.setSelectedIndex(i);
-                break;
-            }
-        }
+        combox_Unidad.setSelectedItem(unidad);
         txtCantidad.setText(cantidad);
         txtValorUni.setText(valorUnitario);
+    }
+
+    private void cargarProductosAutocompletar() {
+        if (controladorProducto != null) {
+            List<String> productos = controladorProducto.obtenerNombresProductos();
+            // Implementa autocompletado aquí si lo necesitas
+            // AutoCompleteDecorator.decorate(txtProducto, productos, false);
+        }
     }
 
     public boolean isConfirmado() {
@@ -263,8 +283,45 @@ public class InsertarCoti extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Cantidad y valor unitario deben ser numéricos", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_btnGuardarActionPerformed
+    private boolean validarCampos() {
+        if (txtProducto.getText().trim().isEmpty()) {
+            mostrarError("El campo Producto es obligatorio", txtProducto);
+            return false;
+        }
 
+        if (combox_Unidad.getSelectedIndex() == 0) {
+            mostrarError("Seleccione una unidad de medida", combox_Unidad);
+            return false;
+        }
 
+        try {
+            int cantidad = Integer.parseInt(txtCantidad.getText().trim());
+            if (cantidad <= 0) {
+                mostrarError("La cantidad debe ser mayor a cero", txtCantidad);
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            mostrarError("La cantidad debe ser un número válido", txtCantidad);
+            return false;
+        }
+        try {
+            int valorUnitario = Integer.parseInt(txtCantidad.getText().trim());
+            if (valorUnitario <= 0) {
+                mostrarError("La cantidad debe ser mayor a cero", txtCantidad);
+                return false;
+            }
+        } catch (NumberFormatException e) {
+            mostrarError("La cantidad debe ser un número válido", txtCantidad);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void mostrarError(String mensaje, JComponent componente) {
+        JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
+        componente.requestFocus();
+    }
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
         this.dispose();
     }//GEN-LAST:event_btnCancelarActionPerformed
@@ -289,31 +346,11 @@ public class InsertarCoti extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold desc=" Look and feel setting code (optional) ">
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(InsertarCoti.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(InsertarCoti.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(InsertarCoti.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(InsertarCoti.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-        //</editor-fold>
-
-        /* Create and display the dialog */
+        /* Crea y muestra el diálogo */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                InsertarCoti dialog = new InsertarCoti(new javax.swing.JFrame(), true, "", ""); // Valores predeterminados
+                // Usa el constructor básico para el main
+                InsertarCoti dialog = new InsertarCoti(new javax.swing.JFrame(), true, "", "");
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -340,5 +377,51 @@ public class InsertarCoti extends javax.swing.JDialog {
     private RSMaterialComponent.RSTextFieldMaterial txtProducto;
     private RSMaterialComponent.RSTextFieldMaterial txtValorUni;
     // End of variables declaration//GEN-END:variables
+private void configurarFiltrosNumericos() {
+        configurarFiltroNumerico(txtCantidad);
+        configurarFiltroNumerico(txtValorUni);
 
+        // Configuraciones adicionales
+        txtCantidad.setToolTipText("Solo números y un separador decimal (ej: 3001234567)");
+        txtValorUni.setToolTipText("Solo números (ej: 123456789)");
+    }
+
+    private void configurarFiltroNumerico(JTextField textField) {
+        ((AbstractDocument) textField.getDocument()).setDocumentFilter(new DocumentFilter() {
+            @Override
+            public void insertString(DocumentFilter.FilterBypass fb, int offset, String text, AttributeSet attr)
+                    throws BadLocationException {
+                String newText = fb.getDocument().getText(0, fb.getDocument().getLength()) + text;
+                if (validarFormatoNumerico(newText, textField)) {
+                    super.insertString(fb, offset, text, attr);
+                }
+            }
+
+            @Override
+            public void replace(DocumentFilter.FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                    throws BadLocationException {
+                String currentText = fb.getDocument().getText(0, fb.getDocument().getLength());
+                String newText = currentText.substring(0, offset) + text + currentText.substring(offset + length);
+                if (validarFormatoNumerico(newText, textField)) {
+                    super.replace(fb, offset, length, text, attrs);
+                }
+            }
+
+            private boolean validarFormatoNumerico(String text, JTextField field) {
+                // Reglas diferentes según el campo
+                if (field == txtCantidad) {
+                    return text.matches("^[0-9]*([.,][0-9]{0,2})?$"); // Máx 2 decimales
+                }
+
+                if (field == txtCantidad) {
+                    return text.matches("^[0-9]{0,15}$"); // Solo números, máx 15 dígitos
+                } else if (field == txtValorUni) {
+                    return text.matches("^[0-9]{0,20}$"); // Solo números, máx 20 dígitos
+                } else if (field == txtCantidad) {
+                    return text.matches("^[0-9]*([.,][0-9]{0,2})?$"); // Máx 2 decimales
+                }
+                return false;
+            }
+        });
+    }
 }
