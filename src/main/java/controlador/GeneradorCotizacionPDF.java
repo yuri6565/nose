@@ -87,7 +87,14 @@ public class GeneradorCotizacionPDF {
                 contentStream.showText("Subtotal");
                 contentStream.endText();
 
-                yPosition -= 20;
+                // Dibujar línea horizontal debajo del encabezado
+                yPosition -= 5;
+                contentStream.setLineWidth(0.5f);
+                contentStream.moveTo(50, yPosition);
+                contentStream.lineTo(550, yPosition); // Cambiado de 500 a 550
+                contentStream.stroke();
+
+                yPosition -= 15;
                 contentStream.setFont(PDType1Font.HELVETICA, 12);
 
                 System.out.println("Procesando tabla con " + tablaModel.getRowCount() + " filas");
@@ -113,7 +120,15 @@ public class GeneradorCotizacionPDF {
                             newContentStream.newLineAtOffset(120, 0);
                             newContentStream.showText("Subtotal");
                             newContentStream.endText();
-                            yPosition = 750 - 20;
+
+                            // Dibujar línea horizontal debajo del encabezado en nueva página
+                            yPosition = 745;
+                            newContentStream.setLineWidth(0.5f);
+                            newContentStream.moveTo(50, yPosition);
+                            newContentStream.lineTo(550, yPosition); // Cambiado de 500 a 550
+                            newContentStream.stroke();
+
+                            yPosition -= 15;
                             newContentStream.setFont(PDType1Font.HELVETICA, 12);
                             newContentStream.beginText();
                             newContentStream.newLineAtOffset(50, yPosition);
@@ -127,6 +142,12 @@ public class GeneradorCotizacionPDF {
                             newContentStream.newLineAtOffset(120, 0);
                             newContentStream.showText(tablaModel.getValueAt(i, 4).toString()); // Subtotal
                             newContentStream.endText();
+
+                            // Dibujar línea horizontal debajo de la fila
+                            yPosition -= 5;
+                            newContentStream.moveTo(50, yPosition);
+                            newContentStream.lineTo(550, yPosition); // Cambiado de 500 a 550
+                            newContentStream.stroke();
                         }
                     } else {
                         contentStream.beginText();
@@ -141,6 +162,13 @@ public class GeneradorCotizacionPDF {
                         contentStream.newLineAtOffset(120, 0);
                         contentStream.showText(tablaModel.getValueAt(i, 4).toString()); // Subtotal
                         contentStream.endText();
+
+                        // Dibujar línea horizontal debajo de la fila
+                        yPosition -= 5;
+                        contentStream.moveTo(50, yPosition);
+                        contentStream.lineTo(550, yPosition); // Cambiado de 500 a 550
+                        contentStream.stroke();
+                        yPosition -= 15;
                     }
                 }
 
@@ -151,12 +179,21 @@ public class GeneradorCotizacionPDF {
                 contentStream.showText("Total: " + total);
                 contentStream.endText();
 
+                // Dibujar línea horizontal debajo de Total
+                yPosition -= 5;
+                contentStream.moveTo(50, yPosition);
+                contentStream.lineTo(180, yPosition); // Cambiado de 500 a 550
+                contentStream.stroke();
+
                 // Mensaje
                 yPosition -= 40;
                 contentStream.beginText();
                 contentStream.newLineAtOffset(50, yPosition);
                 contentStream.showText("¡Gracias por su cotización!");
                 contentStream.endText();
+
+                // Dibujar línea horizontal debajo del mensaje
+               
             }
 
             System.out.println("Guardando documento en: " + archivoSalida);

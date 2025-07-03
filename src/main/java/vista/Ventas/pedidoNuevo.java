@@ -6,6 +6,7 @@ package vista.Ventas;
 
 import controlador.Ctrl_Cliente;
 import controlador.Ctrl_Pedido;
+import java.awt.Frame;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -20,6 +21,11 @@ import javax.swing.table.TableColumn;
 import modelo.Cliente;
 import modelo.Pedido;
 import modelo.PedidoDetalle;
+import vista.alertas.DebesLLenarDatos;
+import vista.alertas.PedidoIngreseNombre;
+import vista.alertas.PedidoIngresefechaFIN;
+import vista.alertas.PedidoIngresefechaINI;
+import vista.alertas.Pedidoseleccionecliente;
 import vista.crear_cliente;
 
 /**
@@ -27,7 +33,7 @@ import vista.crear_cliente;
  * @author ZenBook
  */
 public class pedidoNuevo extends javax.swing.JDialog {
-    
+
     private List<Cliente> clientes;
     private List<PedidoDetalle> detalles = new ArrayList<>(); // Lista para almacenar los detalles
     public boolean clienteGuardado = false;
@@ -47,25 +53,28 @@ public class pedidoNuevo extends javax.swing.JDialog {
         tablaDetalles.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         TableColumn descripcionColumn = tablaDetalles.getColumnModel().getColumn(0);
-        descripcionColumn.setPreferredWidth(38); // Ajustar el ancho de la columna
+        descripcionColumn.setPreferredWidth(100); // Ajustar el ancho de la columna
 
         TableColumn cantidadColumn = tablaDetalles.getColumnModel().getColumn(1);
-        cantidadColumn.setPreferredWidth(18); // Ajustar el ancho de la columna
+        cantidadColumn.setPreferredWidth(30); // Ajustar el ancho de la columna
 
-        TableColumn dimensionColumn = tablaDetalles.getColumnModel().getColumn(2);
-        dimensionColumn.setPreferredWidth(30); // Ajustar el ancho de la columna
-
-        TableColumn preciouColumn = tablaDetalles.getColumnModel().getColumn(3);
-        preciouColumn.setPreferredWidth(30); // Ajustar el ancho de la columna
+        TableColumn dimensionesColumn = tablaDetalles.getColumnModel().getColumn(2);
+        dimensionesColumn.setPreferredWidth(110); // Ajustar el ancho de la columna
 
         TableColumn subtotalColumn = tablaDetalles.getColumnModel().getColumn(4);
-        subtotalColumn.setPreferredWidth(30); // Ajustar el ancho de la columna
+        subtotalColumn.setPreferredWidth(60); // Ajustar el ancho de la columna
 
-        // Configurar la columna "Detalle"
-        TableColumn deleteColumn = tablaDetalles.getColumnModel().getColumn(5);
-        deleteColumn.setPreferredWidth(18); // Ajustar el ancho de la columna
+        TableColumn editarColumn = tablaDetalles.getColumnModel().getColumn(5);
+        editarColumn.setPreferredWidth(20); // Ajustar el ancho de la columna
+
+        TableColumn eliminarColumn = tablaDetalles.getColumnModel().getColumn(6);
+        eliminarColumn.setPreferredWidth(20); // Ajustar el ancho de la columna
 
         cargarClientes();
+
+        // En el constructor después de initComponents():
+        dateFinicio.addPropertyChangeListener("date", evt -> validarFechasEnTiempoReal());
+        dateFfin.addPropertyChangeListener("date", evt -> validarFechasEnTiempoReal());
 
         tablaDetalles.getModel().addTableModelListener(e -> {
             if (e.getColumn() == 1 || e.getColumn() == 3) { // Si se edita "Cantidad" o "Precio unitario"
@@ -137,6 +146,68 @@ public class pedidoNuevo extends javax.swing.JDialog {
         }
     }
 
+    private void editarFila(int row) {
+        DefaultTableModel model = (DefaultTableModel) tablaDetalles.getModel();
+
+        // Obtener los datos de la fila seleccionada
+        String descripcion = (String) model.getValueAt(row, 0);
+        Object cantidadObj = model.getValueAt(row, 1);
+        String cantidad = (cantidadObj != null) ? String.valueOf(cantidadObj) : "";
+        String dimensiones = (String) model.getValueAt(row, 2);
+        String precioUnitario = (String) model.getValueAt(row, 3);
+
+        // Abrir el diálogo de edición con los datos
+        editarSubdetalles dialog = new editarSubdetalles(new javax.swing.JFrame(), true, descripcion, cantidad, dimensiones, precioUnitario);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+
+        // Obtener el detalle editado
+        PedidoDetalle detalle = dialog.getDetalle();
+        if (detalle != null) {
+            // Formatear precio unitario y subtotal
+            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+            symbols.setGroupingSeparator('.');
+            DecimalFormat df = new DecimalFormat("$#,##0.##", symbols);
+
+            // Actualizar la fila en la tabla
+            model.setValueAt(detalle.getDescripcion(), row, 0);
+            model.setValueAt(String.valueOf(detalle.getCantidad()), row, 1);
+            model.setValueAt(detalle.getDimensiones(), row, 2);
+            model.setValueAt(df.format(detalle.getPrecioUnitario()), row, 3);
+            model.setValueAt(df.format(detalle.getSubtotal()), row, 4);
+
+            // Actualizar el total
+            actualizarTotal();
+        }
+    }
+
+    private void eliminarFila(int row) {
+        DefaultTableModel model = (DefaultTableModel) tablaDetalles.getModel();
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Está seguro de que desea eliminar esta fila?",
+                "Confirmar eliminación",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            model.removeRow(row);
+            actualizarTotal();
+        }
+    }
+
+    private void validarFechasEnTiempoReal() {
+        if (dateFinicio.getDate() != null && dateFfin.getDate() != null) {
+            if (dateFfin.getDate().before(dateFinicio.getDate())) {
+                JOptionPane.showMessageDialog(this,
+                        "La fecha final no puede ser anterior a la fecha inicial",
+                        "Error en fechas",
+                        JOptionPane.ERROR_MESSAGE);
+
+                dateFfin.setDate(null); // Limpia la fecha incorrecta
+                dateFfin.requestFocus(); // Enfoca el campo para corrección
+            }
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -150,10 +221,8 @@ public class pedidoNuevo extends javax.swing.JDialog {
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         cmbCliente = new RSMaterialComponent.RSComboBoxMaterial();
-        cmbEstado = new RSMaterialComponent.RSComboBoxMaterial();
         btnCancelar = new rojeru_san.RSButtonRiple();
         btnGuardar = new rojeru_san.RSButtonRiple();
         lblTotal = new javax.swing.JLabel();
@@ -185,19 +254,15 @@ public class pedidoNuevo extends javax.swing.JDialog {
         jLabel1.setText("Agregar pedido");
         jPanel2.add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, -1, -1, 40));
 
-        panelP.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 850, 40));
+        panelP.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 880, 40));
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
         jLabel3.setText("Nombre:");
         panelP.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 50, -1, -1));
 
-        jLabel5.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
-        jLabel5.setText("Estado:");
-        panelP.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 50, -1, -1));
-
         jLabel7.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
         jLabel7.setText("Fecha fin:");
-        panelP.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 130, -1, -1));
+        panelP.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 50, -1, -1));
 
         cmbCliente.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Seleccione cliente:" }));
         cmbCliente.setColorMaterial(new java.awt.Color(0, 0, 0));
@@ -207,17 +272,7 @@ public class pedidoNuevo extends javax.swing.JDialog {
                 cmbClienteActionPerformed(evt);
             }
         });
-        panelP.add(cmbCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 80, 170, 30));
-
-        cmbEstado.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Seleccione el estado:", "Pendiente", "Proceso", "Finalizado" }));
-        cmbEstado.setColorMaterial(new java.awt.Color(0, 0, 0));
-        cmbEstado.setFont(new java.awt.Font("Roboto Bold", 0, 14)); // NOI18N
-        cmbEstado.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbEstadoActionPerformed(evt);
-            }
-        });
-        panelP.add(cmbEstado, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 80, 200, 30));
+        panelP.add(cmbCliente, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 160, 170, 30));
 
         btnCancelar.setBackground(new java.awt.Color(46, 49, 82));
         btnCancelar.setText("Cancelar");
@@ -228,7 +283,7 @@ public class pedidoNuevo extends javax.swing.JDialog {
                 btnCancelarActionPerformed(evt);
             }
         });
-        panelP.add(btnCancelar, new org.netbeans.lib.awtextra.AbsoluteConstraints(530, 610, 140, -1));
+        panelP.add(btnCancelar, new org.netbeans.lib.awtextra.AbsoluteConstraints(560, 610, 140, -1));
 
         btnGuardar.setBackground(new java.awt.Color(46, 49, 82));
         btnGuardar.setText("Guardar");
@@ -239,7 +294,7 @@ public class pedidoNuevo extends javax.swing.JDialog {
                 btnGuardarActionPerformed(evt);
             }
         });
-        panelP.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(690, 610, 140, -1));
+        panelP.add(btnGuardar, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 610, 140, -1));
 
         lblTotal.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         lblTotal.setText("0.00");
@@ -247,15 +302,15 @@ public class pedidoNuevo extends javax.swing.JDialog {
 
         dateFinicio.setBackground(new java.awt.Color(255, 255, 255));
         dateFinicio.setToolTipText("");
-        panelP.add(dateFinicio, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 160, 190, 30));
+        panelP.add(dateFinicio, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 80, 190, 30));
 
         dateFfin.setBackground(new java.awt.Color(255, 255, 255));
         dateFfin.setToolTipText("");
-        panelP.add(dateFfin, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 160, 200, 30));
+        panelP.add(dateFfin, new org.netbeans.lib.awtextra.AbsoluteConstraints(580, 80, 200, 30));
 
         jLabel9.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
         jLabel9.setText("Cliente:");
-        panelP.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(300, 50, -1, -1));
+        panelP.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 130, -1, -1));
 
         txtNombre.setForeground(new java.awt.Color(0, 0, 0));
         txtNombre.setColorMaterial(new java.awt.Color(0, 0, 0));
@@ -272,17 +327,17 @@ public class pedidoNuevo extends javax.swing.JDialog {
 
         tablaDetalles.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, "0.0", "0.0", "Eliminar"}
+
             },
             new String [] {
-                "Descripcion", "Cantidad", "Dimesiones", "Precio unitario", "Subtotal", "Accion"
+                "Descripcion", "Cantidad", "Dimesiones", "Precio unitario", "Subtotal", "Editar", "Eliminar"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class
+                java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class
             };
             boolean[] canEdit = new boolean [] {
-                true, true, true, true, false, false
+                false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -315,12 +370,12 @@ public class pedidoNuevo extends javax.swing.JDialog {
         jScrollPane2.setViewportView(tablaDetalles);
         tablaDetalles.getColumnModel().getColumn(0).setPreferredWidth(10);
 
-        panelP.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 290, 810, 250));
-        panelP.add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 210, 810, 10));
+        panelP.add(jScrollPane2, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 290, 840, 250));
+        panelP.add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 210, 840, 10));
 
         jLabel11.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
         jLabel11.setText("Fecha inicio:");
-        panelP.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 130, -1, -1));
+        panelP.add(jLabel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(310, 50, -1, -1));
 
         btnClienteN.setBackground(new java.awt.Color(46, 49, 82));
         btnClienteN.setBorder(javax.swing.BorderFactory.createCompoundBorder());
@@ -334,7 +389,7 @@ public class pedidoNuevo extends javax.swing.JDialog {
                 btnClienteNActionPerformed(evt);
             }
         });
-        panelP.add(btnClienteN, new org.netbeans.lib.awtextra.AbsoluteConstraints(480, 80, 25, 25));
+        panelP.add(btnClienteN, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 160, 25, 25));
 
         jLabel12.setFont(new java.awt.Font("Segoe UI", 1, 17)); // NOI18N
         jLabel12.setText("Detalle del pedido: ");
@@ -357,9 +412,9 @@ public class pedidoNuevo extends javax.swing.JDialog {
                 btnAñadirActionPerformed(evt);
             }
         });
-        panelP.add(btnAñadir, new org.netbeans.lib.awtextra.AbsoluteConstraints(720, 250, 110, 30));
+        panelP.add(btnAñadir, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 250, 110, 30));
 
-        getContentPane().add(panelP, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 850, 670));
+        getContentPane().add(panelP, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 880, 670));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -368,10 +423,6 @@ public class pedidoNuevo extends javax.swing.JDialog {
         // TODO add your handling code here:
     }//GEN-LAST:event_cmbClienteActionPerformed
 
-    private void cmbEstadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbEstadoActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_cmbEstadoActionPerformed
-
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
         clienteGuardado = false;
         dispose();
@@ -379,34 +430,32 @@ public class pedidoNuevo extends javax.swing.JDialog {
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
         String nombre = txtNombre.getText().trim();
-        String estado = (String) cmbEstado.getSelectedItem();
         String clienteNombreCompleto = (String) cmbCliente.getSelectedItem();
         Date fechaInicio = dateFinicio.getDate();
         Date fechaFin = dateFfin.getDate();
 
         // Validaciones
         if (nombre.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Por favor, ingrese el nombre del pedido.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (estado == null || estado.equals("Seleccione el estado:")) {
-            JOptionPane.showMessageDialog(this, "Por favor, seleccione un estado.", "Error", JOptionPane.ERROR_MESSAGE);
+            PedidoIngreseNombre dialog = new PedidoIngreseNombre((Frame) this.getParent(), true);
+            dialog.setVisible(true);
             return;
         }
 
         if (clienteNombreCompleto == null || clienteNombreCompleto.equals("Seleccione cliente:")) {
-            JOptionPane.showMessageDialog(this, "Por favor, seleccione un cliente.", "Error", JOptionPane.ERROR_MESSAGE);
+            Pedidoseleccionecliente dialog = new Pedidoseleccionecliente((Frame) this.getParent(), true);
+            dialog.setVisible(true);
             return;
         }
 
         if (fechaInicio == null) {
-            JOptionPane.showMessageDialog(this, "Por favor, seleccione la fecha de inicio.", "Error", JOptionPane.ERROR_MESSAGE);
+            PedidoIngresefechaINI dialog = new PedidoIngresefechaINI((Frame) this.getParent(), true);
+            dialog.setVisible(true);
             return;
         }
 
         if (fechaFin == null) {
-            JOptionPane.showMessageDialog(this, "Por favor, seleccione la fecha de fin.", "Error", JOptionPane.ERROR_MESSAGE);
+            PedidoIngresefechaFIN dialog = new PedidoIngresefechaFIN((Frame) this.getParent(), true);
+            dialog.setVisible(true);
             return;
         }
 
@@ -415,25 +464,26 @@ public class pedidoNuevo extends javax.swing.JDialog {
         detalles.clear(); // Limpiar la lista antes de llenarla
 
         for (int i = 0; i < model.getRowCount(); i++) {
-            String descripcion = (model.getValueAt(i, 0) != null) ? model.getValueAt(i, 0).toString().trim() : "";
-            String cantidadStr = (model.getValueAt(i, 1) != null) ? model.getValueAt(i, 1).toString().trim() : "0";
-            String dimensiones = (model.getValueAt(i, 2) != null) ? model.getValueAt(i, 2).toString().trim() : "";
-            String precioUnitarioStr = (model.getValueAt(i, 3) != null) ? model.getValueAt(i, 3).toString().trim() : "0";
-            String subtotalStr = (model.getValueAt(i, 4) != null) ? model.getValueAt(i, 4).toString().trim() : "0";
+            String descripcion = (String) model.getValueAt(i, 0);
+            String cantidadStr = ((String) model.getValueAt(i, 1)).replace("$", "").replace(",", "");
+            String dimensiones = (String) model.getValueAt(i, 2);
+            String precioUnitarioStr = (String) model.getValueAt(i, 3);
+            String subtotalStr = ((String) model.getValueAt(i, 4)).replace("$", "").replace(",", "");
 
+            // Validar descripción y dimensiones
             if (descripcion.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "La descripción en la fila " + (i + 1) + " no puede estar vacía.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (dimensiones.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Las dimensiones en la fila " + (i + 1) + " no pueden estar vacías.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             // Validar cantidad
             int cantidad;
             try {
-                cantidad = Integer.parseInt(cantidadStr);
-                if (cantidad <= 0) {
-                    JOptionPane.showMessageDialog(this, "La cantidad en la fila " + (i + 1) + " debe ser mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+                cantidad = Integer.parseInt(cantidadStr.replace("$", "").replace(",", ""));
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Cantidad inválida en la fila " + (i + 1) + ".", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -442,11 +492,7 @@ public class pedidoNuevo extends javax.swing.JDialog {
             // Validar precio unitario
             double precioUnitario;
             try {
-                precioUnitario = Double.parseDouble(precioUnitarioStr);
-                if (precioUnitario <= 0) {
-                    JOptionPane.showMessageDialog(this, "El precio unitario en la fila " + (i + 1) + " debe ser mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+                precioUnitario = Double.parseDouble(precioUnitarioStr.replace("$", "").replace(",", "").replace(".", ""));
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Precio unitario inválido en la fila " + (i + 1) + ".", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -455,7 +501,7 @@ public class pedidoNuevo extends javax.swing.JDialog {
             // Validar subtotal
             double subtotal;
             try {
-                subtotal = Double.parseDouble(subtotalStr);
+                subtotal = Double.parseDouble(subtotalStr.replace("$", "").replace(",", "").replace(".", ""));
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(this, "Subtotal inválido en la fila " + (i + 1) + ".", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -475,7 +521,8 @@ public class pedidoNuevo extends javax.swing.JDialog {
         }
 
         if (detalles.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Debe agregar al menos un detalle al pedido.", "Error", JOptionPane.ERROR_MESSAGE);
+            DebesLLenarDatos dialog = new DebesLLenarDatos((Frame) this.getParent(), true);
+            dialog.setVisible(true);
             return;
         }
 
@@ -484,7 +531,7 @@ public class pedidoNuevo extends javax.swing.JDialog {
         for (Cliente cli : clientes) {
             String nombreCompleto = cli.getNombre() + " " + cli.getApellido();
             if (nombreCompleto.equals(clienteNombreCompleto)) {
-//                clienteCodigo = cli.getid_cliente(); // Asegúrate de que Cliente tenga getCodigo()
+                clienteCodigo = cli.getId_cliente(); // Asegúrate de que Cliente tenga getCodigo()
                 break;
             }
         }
@@ -497,21 +544,32 @@ public class pedidoNuevo extends javax.swing.JDialog {
         // Obtener usuario_id_usuario (ajusta según tu lógica de autenticación)
         int usuarioIdUsuario = 1; // Ejemplo, reemplaza con el ID del usuario logueado
 
-        // Crear el objeto Pedido
+        // Estado fijo como "Pendiente"
+        String estado = "Pendiente";
+
+        // Crear el objeto Pedido con num_pedido vacío (se generará en el controlador)
         Pedido nuevoPedido = new Pedido(
-                0, // id_pedido (se genera automáticamente)
-                nombre,
-                estado,
-                fechaInicio,
-                fechaFin,
-                clienteCodigo
+            0, // id_pedido (se genera automáticamente)
+            "", // num_pedido (se genera en Ctrl_Pedido)
+            nombre,
+            estado,
+            fechaInicio,
+            fechaFin,
+            clienteCodigo
         );
+        nuevoPedido.setDetalles(detalles);
 
         // Insertar pedido y detalles
         int nuevoIdPedido = controlador.insertar(nuevoPedido, detalles);
         if (nuevoIdPedido > 0) {
+            String numeroPedido = nuevoPedido.getNum_pedido(); // Asegúrate de que Pedido tenga este getter
+            JOptionPane.showMessageDialog(
+                this,
+                "Pedido guardado exitosamente.\nNúmero: " + numeroPedido,
+                "Éxito",
+                JOptionPane.INFORMATION_MESSAGE
+            );
             parent.cargarDatosIniciales();
-            JOptionPane.showMessageDialog(this, "Pedido guardado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             dispose();
         } else {
             JOptionPane.showMessageDialog(this, "Error al guardar el pedido.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -526,16 +584,11 @@ public class pedidoNuevo extends javax.swing.JDialog {
         int column = tablaDetalles.getColumnModel().getColumnIndexAtX(evt.getX());
         int row = evt.getY() / tablaDetalles.getRowHeight();
 
-        if (row < tablaDetalles.getRowCount() && row >= 0 && column == 5) { // Si se hace clic en la columna "Eliminar"
-            DefaultTableModel model = (DefaultTableModel) tablaDetalles.getModel();
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "¿Está seguro de que desea eliminar esta fila?",
-                    "Confirmar eliminación",
-                    JOptionPane.YES_NO_OPTION);
-
-            if (confirm == JOptionPane.YES_OPTION) {
-                model.removeRow(row);
-                actualizarTotal();
+        if (row < tablaDetalles.getRowCount() && row >= 0) {
+            if (column == 5) { // Columna "Editar"
+                editarFila(row);
+            } else if (column == 6) { // Columna "Eliminar"
+                eliminarFila(row);
             }
         }
     }//GEN-LAST:event_tablaDetallesMouseClicked
@@ -557,10 +610,33 @@ public class pedidoNuevo extends javax.swing.JDialog {
     }//GEN-LAST:event_btnClienteNActionPerformed
 
     private void btnAñadirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAñadirActionPerformed
-        DefaultTableModel model = (DefaultTableModel) tablaDetalles.getModel();
-        // Agregar una nueva fila vacía
-        model.addRow(new Object[]{"", 0, "", 0.0, 0.0, "Eliminar"});
-        actualizarTotal();
+        nuevoSubdetalles dialog = new nuevoSubdetalles(new javax.swing.JFrame(), true);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+
+        // Obtener el detalle creado
+        PedidoDetalle detalle = dialog.getDetalle();
+        if (detalle != null) {
+            // Formatear precio unitario y subtotal
+            DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+            symbols.setGroupingSeparator('.');
+            DecimalFormat df = new DecimalFormat("$#,##0.##", symbols);
+
+            // Añadir la fila a la tabla
+            DefaultTableModel model = (DefaultTableModel) tablaDetalles.getModel();
+            model.addRow(new Object[]{
+                detalle.getDescripcion(),
+                String.valueOf(detalle.getCantidad()),
+                detalle.getDimensiones(),
+                df.format(detalle.getPrecioUnitario()),
+                df.format(detalle.getSubtotal()),
+                "Editar",
+                "Eliminar"
+            });
+
+            // Actualizar el total
+            actualizarTotal();
+        }
     }//GEN-LAST:event_btnAñadirActionPerformed
 
     /**
@@ -616,7 +692,6 @@ public class pedidoNuevo extends javax.swing.JDialog {
     private RSMaterialComponent.RSButtonShape btnClienteN;
     private rojeru_san.RSButtonRiple btnGuardar;
     private RSMaterialComponent.RSComboBoxMaterial cmbCliente;
-    private RSMaterialComponent.RSComboBoxMaterial cmbEstado;
     private com.toedter.calendar.JDateChooser dateFfin;
     private com.toedter.calendar.JDateChooser dateFinicio;
     private javax.swing.JLabel jLabel1;
@@ -624,7 +699,6 @@ public class pedidoNuevo extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel2;

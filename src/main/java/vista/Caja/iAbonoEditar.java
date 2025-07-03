@@ -7,17 +7,22 @@ package vista.Caja;
 import controlador.Ctrl_CajaIngresos;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.text.SimpleDateFormat;
-import javax.swing.JOptionPane;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import javax.swing.JOptionPane;
 import javax.swing.text.AbstractDocument;
+import modelo.Ingresos;
 import vista.Inventario0.NumberFormatFilterInventario;
 
 /**
  *
  * @author ZenBook
  */
-public class iAbonoNuevo extends javax.swing.JDialog {
+public class iAbonoEditar extends javax.swing.JDialog {
 
     private Ctrl_CajaIngresos controlador;
     private int idPedido;
@@ -26,18 +31,21 @@ public class iAbonoNuevo extends javax.swing.JDialog {
     private boolean guardado = false; // Indica si se presionó "Guardar"
     private javax.swing.JSpinner spinnerImporte;
 
+    private int idAbono; // Variable para almacenar el ID del abono a editar
+
     /**
-     * Creates new form iAbonoNuevo
+     * Creates new form iAbonoEditar
      */
-    public iAbonoNuevo(java.awt.Frame parent, boolean modal, int idPedido, String numPedido, Ctrl_CajaIngresos controlador) {
+    public iAbonoEditar(java.awt.Frame parent, boolean modal, int idAbono, int idPedido, String numPedido, Ctrl_CajaIngresos controlador) {
         super(parent, modal);
         this.controlador = controlador;
         this.idPedido = idPedido;
-        this.numPedido = numPedido; // Guarda el número de pedido
+        this.numPedido = numPedido;
+        this.idAbono = idAbono;
         initComponents();
 
-        lblNumero.setText(numPedido); // Muestra el número de pedido (ej: "PED-1001")
-        dateFecha.setDate(new Date()); // Establece la fecha actual por defecto
+        lblNumero.setText(numPedido);
+        cargarDatosAbono(); // Método para cargar los datos del abono
 
         ((AbstractDocument) txtCantidad.getDocument()).setDocumentFilter(new NumberFormatFilterInventario());
 
@@ -92,6 +100,55 @@ public class iAbonoNuevo extends javax.swing.JDialog {
         return guardado;
     }
 
+    private void cargarDatosAbono() {
+        // Obtener el abono desde la base de datos
+        List<Ingresos> abonos = controlador.obtenerAbonosPorPedido(idPedido);
+        Ingresos abonoEditar = abonos.stream()
+                .filter(a -> a.getIdAbono() == idAbono)
+                .findFirst()
+                .orElse(null);
+
+        if (abonoEditar != null) {
+            // Cargar datos en los campos
+            dateFecha.setDate(abonoEditar.getFechaPago());
+            
+                    // Formatear el monto con separador de miles
+        txtCantidad.setText(formatNumber(abonoEditar.getMonto()));
+
+            // Seleccionar el método de pago en el combobox
+            for (int i = 0; i < cmbMetodo.getItemCount(); i++) {
+                if (cmbMetodo.getItemAt(i).equals(abonoEditar.getMetodoPago())) {
+                    cmbMetodo.setSelectedIndex(i);
+                    break;
+                }
+            }
+
+            txtReferencia.setText(abonoEditar.getReferencia() != null ? abonoEditar.getReferencia() : "");
+            txtObservaciones.setText(abonoEditar.getObservacion() != null ? abonoEditar.getObservacion() : "");
+        } else {
+            JOptionPane.showMessageDialog(this, "No se encontró el abono a editar", "Error", JOptionPane.ERROR_MESSAGE);
+            dispose();
+        }
+    }
+    
+private String formatNumber(double number) {
+    DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+    symbols.setGroupingSeparator('.');
+    DecimalFormat df = new DecimalFormat("#,##0", symbols);
+    return df.format(number);
+}
+
+private double parseFormattedNumber(String text) {
+    try {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.US);
+        symbols.setGroupingSeparator('.');
+        DecimalFormat df = new DecimalFormat("#,##0", symbols);
+        return df.parse(text.replaceAll("[^0-9.]", "")).doubleValue();
+    } catch (ParseException e) {
+        return 0;
+    }
+}
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -101,7 +158,6 @@ public class iAbonoNuevo extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        roboto1 = new efectos.Roboto();
         jPanel1 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         dateFecha = new com.toedter.calendar.JDateChooser();
@@ -261,7 +317,7 @@ public class iAbonoNuevo extends javax.swing.JDialog {
     }//GEN-LAST:event_cmbMetodoActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-        // Validación de campos
+        // Validación de campos (igual que antes)
         if (dateFecha.getDate() == null) {
             JOptionPane.showMessageDialog(this, "Seleccione la fecha", "Error", JOptionPane.ERROR_MESSAGE);
             return;
@@ -288,38 +344,42 @@ public class iAbonoNuevo extends javax.swing.JDialog {
                     "La referencia es obligatoria para " + metodoPago,
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
-            txtReferencia.requestFocus(); // Enfoca el campo de referencia
+            txtReferencia.requestFocus();
             return;
         }
 
         try {
-            double monto = Double.parseDouble(importeText);
+            double nuevoMonto = parseFormattedNumber(importeText);
+
+            // Obtener el abono actual para comparar
+            Ingresos abonoActual = controlador.obtenerAbonoPorId(idAbono);
+            double montoActual = abonoActual != null ? abonoActual.getMonto() : 0;
+            double diferencia = nuevoMonto - montoActual;
 
             // Obtener el total pendiente del pedido
             Ctrl_CajaIngresos.IngresoConDetalles ingreso = controlador.obtenerDetallesIngreso(idPedido);
-            double debidoActual = ingreso != null ? ingreso.getDebido() : 0;
+            double debidoActual = ingreso != null ? ingreso.getDebido() + montoActual : 0;
 
-            // Validar que el abono no exceda el total pendiente
-            if (monto > debidoActual) {
+            // Validar que el cambio no exceda el total pendiente
+            if (diferencia > debidoActual) {
                 JOptionPane.showMessageDialog(this,
-                        "El monto del abono ($" + monto + ") excede el saldo pendiente ($" + debidoActual + ")",
+                        "El ajuste excede el saldo pendiente. Máximo permitido: $" + (debidoActual + montoActual),
                         "Error en monto",
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Validación adicional para monto = 0
-            if (monto <= 0) {
+            if (nuevoMonto <= 0) {
                 JOptionPane.showMessageDialog(this, "El monto debe ser mayor a 0", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             String observacion = txtObservaciones.getText();
 
-            // Registrar el abono
-            boolean exito = controlador.registrarAbono(
-                    idPedido,
-                    monto,
+            // Actualizar el abono en lugar de insertar
+            boolean exito = controlador.actualizarAbono(
+                    idAbono,
+                    nuevoMonto,
                     metodoPago,
                     referencia,
                     observacion
@@ -327,10 +387,10 @@ public class iAbonoNuevo extends javax.swing.JDialog {
 
             if (exito) {
                 guardado = true;
-                JOptionPane.showMessageDialog(this, "Abono registrado exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Abono actualizado exitosamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "Error al registrar el abono", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error al actualizar el abono", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Formato de cantidad inválido", "Error", JOptionPane.ERROR_MESSAGE);
@@ -387,24 +447,23 @@ public class iAbonoNuevo extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(iAbonoNuevo.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(iAbonoEditar.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(iAbonoNuevo.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(iAbonoEditar.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(iAbonoNuevo.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(iAbonoEditar.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(iAbonoNuevo.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(iAbonoEditar.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-        //</editor-fold>
         //</editor-fold>
         //</editor-fold>
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                Ctrl_CajaIngresos controlador = new Ctrl_CajaIngresos(); // Instancia temporal para prueba
-                iAbonoNuevo dialog = new iAbonoNuevo(new javax.swing.JFrame(), true, 1, "PED-1001", controlador); // ID 1 y numPedido como prueba
+                Ctrl_CajaIngresos controlador = new Ctrl_CajaIngresos();
+                // Ejemplo con ID de abono 1, ID de pedido 1 y número de pedido "PED-1001"
+                iAbonoEditar dialog = new iAbonoEditar(new javax.swing.JFrame(), true, 1, 1, "PED-1001", controlador);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -431,10 +490,8 @@ public class iAbonoNuevo extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblNumero;
-    private efectos.Roboto roboto1;
     private RSMaterialComponent.RSTextFieldMaterial txtCantidad;
     private javax.swing.JTextArea txtObservaciones;
     private RSMaterialComponent.RSTextFieldMaterial txtReferencia;
     // End of variables declaration//GEN-END:variables
-
 }

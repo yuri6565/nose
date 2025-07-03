@@ -12,25 +12,25 @@ import java.util.Date;
  */
 public class Ingresos {
     private int idAbono;
-    private double montoTotal;
-    private String metodoPago;
+    private int numAbono;
     private Date fechaPago;
-    private double pagado;
-    private double debido;
-    private int idCliente;
+    private double monto;
+    private String metodoPago;
+    private String referencia;
+    private String observacion;
     private int idPedido;
 
     public Ingresos() {
     }
 
-    public Ingresos(int idAbono, double montoTotal, String metodoPago, Date fechaPago, double pagado, double debido, int idCliente, int idPedido) {
+    public Ingresos(int idAbono, int numAbono, Date fechaPago, double monto, String metodoPago, String referencia, String observacion, int idPedido) {
         this.idAbono = idAbono;
-        this.montoTotal = montoTotal;
-        this.metodoPago = metodoPago;
+        this.numAbono = numAbono;
         this.fechaPago = fechaPago;
-        this.pagado = pagado;
-        this.debido = debido;
-        this.idCliente = idCliente;
+        this.monto = monto;
+        this.metodoPago = metodoPago;
+        this.referencia = referencia;
+        this.observacion = observacion;
         this.idPedido = idPedido;
     }
 
@@ -42,20 +42,12 @@ public class Ingresos {
         this.idAbono = idAbono;
     }
 
-    public double getMontoTotal() {
-        return montoTotal;
+    public int getNumAbono() {
+        return numAbono;
     }
 
-    public void setMontoTotal(double montoTotal) {
-        this.montoTotal = montoTotal;
-    }
-
-    public String getMetodoPago() {
-        return metodoPago;
-    }
-
-    public void setMetodoPago(String metodoPago) {
-        this.metodoPago = metodoPago;
+    public void setNumAbono(int numAbono) {
+        this.numAbono = numAbono;
     }
 
     public Date getFechaPago() {
@@ -66,28 +58,36 @@ public class Ingresos {
         this.fechaPago = fechaPago;
     }
 
-    public double getPagado() {
-        return pagado;
+    public double getMonto() {
+        return monto;
     }
 
-    public void setPagado(double pagado) {
-        this.pagado = pagado;
+    public void setMonto(double monto) {
+        this.monto = monto;
     }
 
-    public double getDebido() {
-        return debido;
+    public String getMetodoPago() {
+        return metodoPago;
     }
 
-    public void setDebido(double debido) {
-        this.debido = debido;
+    public void setMetodoPago(String metodoPago) {
+        this.metodoPago = metodoPago;
     }
 
-    public int getIdCliente() {
-        return idCliente;
+    public String getReferencia() {
+        return referencia;
     }
 
-    public void setIdCliente(int idCliente) {
-        this.idCliente = idCliente;
+    public void setReferencia(String referencia) {
+        this.referencia = referencia;
+    }
+
+    public String getObservacion() {
+        return observacion;
+    }
+
+    public void setObservacion(String observacion) {
+        this.observacion = observacion;
     }
 
     public int getIdPedido() {
@@ -97,7 +97,7 @@ public class Ingresos {
     public void setIdPedido(int idPedido) {
         this.idPedido = idPedido;
     }
-
     
     
 }
+
