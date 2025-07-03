@@ -8,9 +8,11 @@ import controlador.Ctrl_Pedido;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import static javax.swing.SwingConstants.CENTER;
@@ -36,7 +38,7 @@ public class pedido extends javax.swing.JPanel {
         this.contenedor = contenedor;
         this.controlador = new Ctrl_Pedido();
         initComponents();
-           aplicarTema(); // Apply initial theme
+        aplicarTema(); // Apply initial theme
 
         // Register for theme changes
         TemaManager.getInstance().addThemeChangeListener(() -> {
@@ -53,7 +55,7 @@ public class pedido extends javax.swing.JPanel {
 
         DefaultTableModel modelo = new DefaultTableModel(
                 new Object[][]{},
-                new String[]{"Codigo", "Nombre", "Estado", "Cliente", "Fecha inicio", "Fecha final", "Detalle"} // Usa tus nombres de columnas reales
+                new String[]{"ID pedido", "Nombre", "Estado", "Cliente", "Fecha inicio", "Fecha final", "Detalle", "ID"} // Usa tus nombres de columnas reales
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -69,6 +71,9 @@ public class pedido extends javax.swing.JPanel {
         tablaM.setModel(modelo);
 
         tablaM.getColumnModel().getColumn(2).setCellRenderer(new EstadoTableCellRenderer());
+
+        TableColumn column = tablaM.getColumnModel().getColumn(7); // Columna ID
+        tablaM.removeColumn(column);
 
         // Cargar datos desde la base de datos
         cargarDatosIniciales();
@@ -88,13 +93,35 @@ public class pedido extends javax.swing.JPanel {
         List<Ctrl_Pedido.MaterialConDetalles> pedidos = controlador.obtenerMateriales();
         for (Ctrl_Pedido.MaterialConDetalles pedido : pedidos) {
             model.addRow(new Object[]{
-                pedido.getPedido().getId_pedido(),
+                pedido.getPedido().getNum_pedido(),
                 pedido.getPedido().getNombre(),
                 pedido.getPedido().getEstado(),
                 pedido.getNombreCliente(),
-                new java.text.SimpleDateFormat("yyyy-MM-dd").format(pedido.getPedido().getFecha_inicio()),
-                new java.text.SimpleDateFormat("yyyy-MM-dd").format(pedido.getPedido().getFecha_fin()),
-                "Ver"
+                new java.text.SimpleDateFormat("dd/MM/yyyy").format(pedido.getPedido().getFecha_inicio()),
+                new java.text.SimpleDateFormat("dd/MM/yyyy").format(pedido.getPedido().getFecha_fin()),
+                "Ver",
+                pedido.getPedido().getId_pedido() // Guardar el ID como dato oculto en la última columna
+            });
+        }
+    }
+
+    // Método para manejar búsqueda (conecta con tu campo de búsqueda):
+    private void buscarPedidos() {
+        String criterio = txtBuscar.getText().trim();
+        DefaultTableModel model = (DefaultTableModel) tablaM.getModel();
+        model.setRowCount(0);
+
+        List<Ctrl_Pedido.MaterialConDetalles> resultados = controlador.buscarPedidos(criterio);
+        for (Ctrl_Pedido.MaterialConDetalles pedido : resultados) {
+            model.addRow(new Object[]{
+                pedido.getPedido().getNum_pedido(),
+                pedido.getPedido().getNombre(),
+                pedido.getPedido().getEstado(),
+                pedido.getNombreCliente(),
+                new SimpleDateFormat("dd/MM/yyyy").format(pedido.getPedido().getFecha_inicio()),
+                new SimpleDateFormat("dd/MM/yyyy").format(pedido.getPedido().getFecha_fin()),
+                "Ver",
+                pedido.getPedido().getId_pedido()
             });
         }
     }
@@ -192,14 +219,11 @@ public class pedido extends javax.swing.JPanel {
         contenedor.repaint();
     }
 
-    
-    
-    
-      public void aplicarTema() {
+    public void aplicarTema() {
         boolean oscuro = TemaManager.getInstance().isOscuro();
 
         if (oscuro) {
-            Color fondo = new Color(21,21,33);
+            Color fondo = new Color(21, 21, 33);
             Color primario = new Color(40, 60, 150);
             Color texto = Color.WHITE;
 
@@ -208,16 +232,15 @@ public class pedido extends javax.swing.JPanel {
             txtBuscar.setForeground(texto);
             txtBuscar.setColorIcon(texto);
             txtBuscar.setPhColor(Color.LIGHT_GRAY);
-            
-            
-          tablaM.setBackground(new Color (21,21,33));
-            tablaM.setBackgoundHead(new Color (67, 71, 120));
-            tablaM.setForegroundHead(new Color (255,255,255));
+
+            tablaM.setBackground(new Color(21, 21, 33));
+            tablaM.setBackgoundHead(new Color(67, 71, 120));
+            tablaM.setForegroundHead(new Color(255, 255, 255));
             tablaM.setBackgoundHover(new Color(40, 50, 90));
-         tablaM.setFont(new Font("Tahoma", Font.PLAIN, 15));
-            tablaM.setColorPrimary(new Color(37,37,52));
+            tablaM.setFont(new Font("Tahoma", Font.PLAIN, 15));
+            tablaM.setColorPrimary(new Color(37, 37, 52));
             tablaM.setColorPrimaryText(texto);
-            tablaM.setColorSecondary(new Color(30,30,45));
+            tablaM.setColorSecondary(new Color(30, 30, 45));
             tablaM.setColorSecundaryText(texto);
             tablaM.setColorBorderHead(primario);
             tablaM.setColorBorderRows(fondo.darker());
@@ -225,15 +248,15 @@ public class pedido extends javax.swing.JPanel {
             tablaM.setFontRowHover(new Font("Tahoma", Font.BOLD, 15));
             tablaM.setFontRowSelect(new Font("Tahoma", Font.BOLD, 15));
             tablaM.setEffectHover(true);
-              tablaM.setShowGrid(true);
-tablaM.setGridColor(Color.WHITE); // o el color que desees
+            tablaM.setShowGrid(true);
+            tablaM.setGridColor(Color.WHITE); // o el color que desees
 
             btnEliminar1.setBackground(new Color(67, 71, 120));
-            btnNuevo.setBackgroundHover(new Color(118,142,240));
+            btnNuevo.setBackgroundHover(new Color(118, 142, 240));
             btnNuevo.setBackground(new Color(67, 71, 120));
-           btnEliminar1.setBackgroundHover(new Color(118,142,240));
+            btnEliminar1.setBackgroundHover(new Color(118, 142, 240));
             btnEliminar1.setBackground(new Color(67, 71, 120));
-            btnEliminar1.setBackgroundHover(new Color(118,142,240));
+            btnEliminar1.setBackgroundHover(new Color(118, 142, 240));
         } else {
             Color fondo = new Color(242, 247, 255);
             Color texto = Color.BLACK;
@@ -244,26 +267,25 @@ tablaM.setGridColor(Color.WHITE); // o el color que desees
             txtBuscar.setForeground(texto);
             txtBuscar.setColorIcon(texto);
             txtBuscar.setPhColor(Color.GRAY);
-            
-            
-      tablaM.setBackground(new Color (255,255,255));
-            tablaM.setBackgoundHead(new Color (46,49,82));
+
+            tablaM.setBackground(new Color(255, 255, 255));
+            tablaM.setBackgoundHead(new Color(46, 49, 82));
             tablaM.setForegroundHead(Color.WHITE);
-            tablaM.setBackgoundHover(new Color(67,150,209));
-           tablaM.setFont(new Font("Tahoma", Font.PLAIN, 15));
+            tablaM.setBackgoundHover(new Color(67, 150, 209));
+            tablaM.setFont(new Font("Tahoma", Font.PLAIN, 15));
             tablaM.setColorPrimary(new Color(242, 242, 242));
             tablaM.setColorPrimaryText(texto);
             tablaM.setColorSecondary(new Color(255, 255, 255));
             tablaM.setColorSecundaryText(texto);
             tablaM.setColorBorderHead(primario);
-            tablaM.setColorBorderRows(new Color(0,0,0));
+            tablaM.setColorBorderRows(new Color(0, 0, 0));
             tablaM.setFontHead(new Font("Tahoma", Font.BOLD, 15));
             tablaM.setFontRowHover(new Font("Tahoma", Font.BOLD, 15));
             tablaM.setFontRowSelect(new Font("Tahoma", Font.BOLD, 15));
             tablaM.setEffectHover(true);
-            tablaM.setSelectionBackground(new Color(67,150,209));
+            tablaM.setSelectionBackground(new Color(67, 150, 209));
             tablaM.setShowGrid(true);
-tablaM.setGridColor(Color.BLACK); // o el color que desees
+            tablaM.setGridColor(Color.BLACK); // o el color que desees
 
             btnNuevo.setBackground(new Color(46, 49, 82));
             btnEliminar1.setBackground(new Color(46, 49, 82));
@@ -279,7 +301,6 @@ tablaM.setGridColor(Color.BLACK); // o el color que desees
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        cmbCategoria = new RSMaterialComponent.RSComboBoxMaterial();
         txtBuscar = new RSMaterialComponent.RSTextFieldMaterialIcon();
         btnNuevo = new RSMaterialComponent.RSButtonShape();
         btnEliminar1 = new RSMaterialComponent.RSButtonShape();
@@ -292,12 +313,6 @@ tablaM.setGridColor(Color.BLACK); // o el color que desees
         jPanel1.setBackground(new java.awt.Color(255, 255, 255));
         jPanel1.setPreferredSize(new java.awt.Dimension(1304, 742));
         jPanel1.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
-        cmbCategoria.setForeground(new java.awt.Color(153, 153, 153));
-        cmbCategoria.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Seleccione una categoria:" }));
-        cmbCategoria.setColorMaterial(new java.awt.Color(153, 153, 153));
-        cmbCategoria.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        jPanel1.add(cmbCategoria, new org.netbeans.lib.awtextra.AbsoluteConstraints(470, 40, 280, 30));
 
         txtBuscar.setForeground(new java.awt.Color(0, 0, 0));
         txtBuscar.setColorIcon(new java.awt.Color(0, 0, 0));
@@ -345,19 +360,19 @@ tablaM.setGridColor(Color.BLACK); // o el color que desees
 
         tablaM.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Codigo", "Nombre", "Estado", "Cliente", "Fecha Inicio", "Fecha Final", "Detalle"
+                "N° pedido", "Nombre", "Estado", "Cliente", "Fecha Inicio", "Fecha Final", "Detalle", "ID"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+                java.lang.Object.class, java.lang.String.class, java.lang.Integer.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class
             };
             boolean[] canEdit = new boolean [] {
-                false, true, true, true, true, true, true
+                false, false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -381,6 +396,7 @@ tablaM.setGridColor(Color.BLACK); // o el color que desees
         tablaM.setFontHead(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         tablaM.setFontRowHover(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         tablaM.setFontRowSelect(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        tablaM.setModelSelection(RSMaterialComponent.RSTableMetroCustom.SELECTION_ROWS.MULTIPLE_INTERVAL_SELECTION);
         tablaM.setRowHeight(23);
         tablaM.setSelectionBackground(new java.awt.Color(109, 160, 221));
         tablaM.setShowGrid(false);
@@ -402,63 +418,58 @@ tablaM.setGridColor(Color.BLACK); // o el color que desees
     }//GEN-LAST:event_txtBuscarActionPerformed
 
     private void btnNuevoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNuevoActionPerformed
-    
-            pedidoNuevo dialog = new pedidoNuevo(new javax.swing.JFrame(), true, this);
-            dialog.setLocationRelativeTo(null);
-            dialog.setVisible(true);
-        
+
+        pedidoNuevo dialog = new pedidoNuevo(new javax.swing.JFrame(), true, this);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
     }//GEN-LAST:event_btnNuevoActionPerformed
 
     private void btnEliminar1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminar1ActionPerformed
         int[] selectedRows = tablaM.getSelectedRows();
 
-        // Verificar si hay filas seleccionadas
         if (selectedRows.length == 0) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Por favor, seleccione al menos un pedido para eliminar.", "Advertencia", javax.swing.JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Seleccione al menos un pedido", "Advertencia", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Confirmar eliminación
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(this,
-                "¿Está seguro de que desea eliminar " + selectedRows.length + " pedido(s)? Esto también eliminará sus detalles asociados.",
-                "Confirmar eliminación",
-                javax.swing.JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "¿Eliminar " + selectedRows.length + " pedido(s)?",
+            "Confirmar", JOptionPane.YES_NO_OPTION);
 
-        if (confirm != javax.swing.JOptionPane.YES_OPTION) {
+        if (confirm != JOptionPane.YES_OPTION) {
             return;
         }
 
-        // Eliminar los pedidos seleccionados usando el controlador
-        int deletedCount = 0;
+        int eliminados = 0;
+        DefaultTableModel model = (DefaultTableModel) tablaM.getModel();
+
         for (int row : selectedRows) {
-            int idPedido = (int) tablaM.getValueAt(row, 0); // Obtener el id_pedido de la columna 0
+            // Obtener el ID de la última columna del modelo (índice 7 en el modelo, no en la vista)
+            int modelRow = tablaM.convertRowIndexToModel(row);
+            int idPedido = (int) model.getValueAt(modelRow, 7); // <-- Usar el modelo directamente
+
             if (controlador.eliminarPedido(idPedido)) {
-                deletedCount++;
-            } else {
-                javax.swing.JOptionPane.showMessageDialog(this,
-                        "Error al eliminar el pedido con ID " + idPedido + ".",
-                        "Error",
-                        javax.swing.JOptionPane.ERROR_MESSAGE);
+                eliminados++;
             }
         }
 
-        // Mostrar mensaje de éxito
-        if (deletedCount > 0) {
-            javax.swing.JOptionPane.showMessageDialog(this,
-                    deletedCount + " pedido(s) eliminado(s) exitosamente.",
-                    "Éxito",
-                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            // Recargar datos en la tabla
+        if (eliminados > 0) {
+            JOptionPane.showMessageDialog(this, eliminados + " pedido(s) eliminado(s)", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             cargarDatosIniciales();
         }
     }//GEN-LAST:event_btnEliminar1ActionPerformed
 
     private void tablaMMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaMMouseClicked
-        int column = tablaM.columnAtPoint(evt.getPoint());
-        int row = tablaM.rowAtPoint(evt.getPoint());
+        int viewColumn = tablaM.columnAtPoint(evt.getPoint());
+        int viewRow = tablaM.rowAtPoint(evt.getPoint());
 
-        if (column == 6) { // Columna "Ver"
-            String id = tablaM.getValueAt(row, 0).toString();
+        // Convertir índices de vista a modelo
+        int modelColumn = tablaM.convertColumnIndexToModel(viewColumn);
+        int modelRow = tablaM.convertRowIndexToModel(viewRow);
+
+        if (modelColumn == 6) { // Columna "Ver" en el modelo (índice 6)
+            // Obtener el ID de la columna oculta (índice 7 en el modelo)
+            String id = tablaM.getModel().getValueAt(modelRow, 7).toString();
             mostrarDetallesPedido(id);
         }
     }//GEN-LAST:event_tablaMMouseClicked
@@ -467,7 +478,6 @@ tablaM.setGridColor(Color.BLACK); // o el color que desees
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private RSMaterialComponent.RSButtonShape btnEliminar1;
     private RSMaterialComponent.RSButtonShape btnNuevo;
-    private RSMaterialComponent.RSComboBoxMaterial cmbCategoria;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane3;
     private RSMaterialComponent.RSTableMetroCustom tablaM;

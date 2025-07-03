@@ -21,217 +21,334 @@ import modelo.Ingresos;
  * @author ADSO
  */
 public class Ctrl_CajaIngresos {
-    // Clase interna para encapsular los datos combinados
 
-    public static class IngresoConDetalles {
+    private Connection conn;
 
-        private Ingresos ingreso;
-        private String nombreCliente;
-        private String nombreDetallePedido;
-        private double montoTotalDetalle;
-        private String nombrePedido; // Nuevo campo para el nombre del pedido
-
-        public IngresoConDetalles(Ingresos ingreso, String nombreCliente, String nombreDetallePedido, double montoTotalDetalle, String nombrePedido) {
-            this.ingreso = ingreso;
-            this.nombreCliente = nombreCliente;
-            this.nombreDetallePedido = nombreDetallePedido;
-            this.montoTotalDetalle = montoTotalDetalle;
-            this.nombrePedido = nombrePedido;
-        }
-
-        public Ingresos getIngreso() {
-            return ingreso;
-        }
-
-        public String getNombreCliente() {
-            return nombreCliente;
-        }
-
-        public String getNombreDetallePedido() {
-            return nombreDetallePedido;
-        }
-
-        public double getMontoTotalDetalle() {
-            return montoTotalDetalle;
-        }
-
-        public String getNombrePedido() { // Nuevo getter
-            return nombrePedido;
-        }
+    public Ctrl_CajaIngresos() {
+        conn = Conexion.getConnection();
     }
 
-    public static class PedidoConCliente {
+    public class IngresoConDetalles {
 
         private int idPedido;
-        private String nombrePedido;
+        private String numPedido;
         private String nombreCliente;
-        private double montoTotal;    // <-- nuevo campo
-        private Integer idCliente; // Nuevo campo importante
+        private String nombrePedido;
+        private double montoTotal;
+        private double pagado;
+        private double debido;
+        private List<Ingresos> abonos;
+        private int codigoCliente;  // Nuevo campo
+        private String telefonoCliente; // Nuevo campo
+        private String direccionCliente; // Nuevo campo
+        private String departamentoCliente; // Nuevo campo
+        private String municipioCliente;    // Nuevo campo
 
+        public IngresoConDetalles(int idPedido, String numPedido, String nombreCliente, String nombrePedido, double montoTotal, double pagado, double debido, List<Ingresos> abonos, int codigoCliente, String telefonoCliente, String direccionCliente, String departamentoCliente, String municipioCliente) {
+            this.idPedido = idPedido;
+            this.numPedido = numPedido;
+            this.nombreCliente = nombreCliente;
+            this.nombrePedido = nombrePedido;
+            this.montoTotal = montoTotal;
+            this.pagado = pagado;
+            this.debido = debido;
+            this.abonos = abonos;
+            this.codigoCliente = codigoCliente;
+            this.telefonoCliente = telefonoCliente;
+            this.direccionCliente = direccionCliente;
+            this.departamentoCliente = departamentoCliente;
+            this.municipioCliente = municipioCliente;
+        }
+
+        public String getDepartamentoCliente() {
+            return departamentoCliente;
+        }
+
+        public void setDepartamentoCliente(String departamentoCliente) {
+            this.departamentoCliente = departamentoCliente;
+        }
+
+        public String getMunicipioCliente() {
+            return municipioCliente;
+        }
+
+        public void setMunicipioCliente(String municipioCliente) {
+            this.municipioCliente = municipioCliente;
+        }
+
+        public int getCodigoCliente() {
+            return codigoCliente;
+        }
+
+        public void setCodigoCliente(int codigoCliente) {
+            this.codigoCliente = codigoCliente;
+        }
+
+        public String getTelefonoCliente() {
+            return telefonoCliente;
+        }
+
+        public void setTelefonoCliente(String telefonoCliente) {
+            this.telefonoCliente = telefonoCliente;
+        }
+
+        public String getDireccionCliente() {
+            return direccionCliente;
+        }
+
+        public void setDireccionCliente(String direccionCliente) {
+            this.direccionCliente = direccionCliente;
+        }
+
+        // Getters
         public int getIdPedido() {
             return idPedido;
         }
 
-        public void setIdPedido(int idPedido) {
-            this.idPedido = idPedido;
-        }
-
-        public String getNombrePedido() {
-            return nombrePedido;
-        }
-
-        public void setNombrePedido(String nombrePedido) {
-            this.nombrePedido = nombrePedido;
+        public String getNumPedido() {
+            return numPedido;
         }
 
         public String getNombreCliente() {
             return nombreCliente;
         }
 
-        public void setNombreCliente(String nombreCliente) {
-            this.nombreCliente = nombreCliente;
+        public String getNombrePedido() { // Nuevo getter
+            return nombrePedido;
         }
 
         public double getMontoTotal() {
             return montoTotal;
         }
 
-        public void setMontoTotal(double montoTotal) {
-            this.montoTotal = montoTotal;
+        public double getPagado() {
+            return pagado;
         }
 
-        public Integer getIdCliente() {
-            return idCliente;
+        public double getDebido() {
+            return debido;
         }
 
-        public void setIdCliente(Integer idCliente) {
-            this.idCliente = idCliente;
-        }
-
-        @Override
-        public String toString() {
-            return nombrePedido;  // Solo mostramos el nombre aquí
-        }
-
-    }
-
-    public boolean guardar(Ingresos ingreso) {
-        String sql = "INSERT INTO pago_abono (montoTotal, metodo_pago, fecha_pago, pagado, debido, cliente_codigo, pedido_id_pedido) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection conn = Conexion.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setDouble(1, ingreso.getMontoTotal());
-            pstmt.setString(2, ingreso.getMetodoPago());
-            pstmt.setDate(3, new java.sql.Date(ingreso.getFechaPago().getTime()));
-            pstmt.setDouble(4, ingreso.getPagado());
-            pstmt.setDouble(5, ingreso.getDebido());
-            pstmt.setInt(6, ingreso.getIdCliente());
-            pstmt.setInt(7, ingreso.getIdPedido()); // Usar idPedido en lugar de idDetallePedido
-
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public boolean actualizar(Ingresos ingreso) {
-        String sql = "UPDATE pago_abono SET montoTotal = ?, metodo_pago = ?, fecha_pago = ?, pagado = ?, debido = ?, cliente_codigo = ?, pedido_id_pedido = ? WHERE id_abono = ?";
-        try (Connection conn = Conexion.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setDouble(1, ingreso.getMontoTotal());
-            pstmt.setString(2, ingreso.getMetodoPago());
-            pstmt.setDate(3, new java.sql.Date(ingreso.getFechaPago().getTime()));
-            pstmt.setDouble(4, ingreso.getPagado());
-            pstmt.setDouble(5, ingreso.getDebido());
-            pstmt.setInt(6, ingreso.getIdCliente());
-            pstmt.setInt(7, ingreso.getIdPedido()); // Usar idPedido
-            pstmt.setInt(8, ingreso.getIdAbono());
-
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    // Método para eliminar un ingreso
-    public boolean eliminar(int idAbono) {
-        String sql = "DELETE FROM  pago_abono WHERE id_abono = ?";
-        try (Connection conn = Conexion.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, idAbono);
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+        public List<Ingresos> getAbonos() {
+            return abonos;
         }
     }
 
     public List<IngresoConDetalles> obtenerIngresos() {
-        List<IngresoConDetalles> ingresosList = new ArrayList<>();
-        String sql = "SELECT pago.*, "
-                + "CONCAT(cli.nombre, ' ', cli.apellido) AS nombre_cliente, "
-                + "ped.nombre AS nombre_pedido "
-                + "FROM pago_abono pago "
-                + "LEFT JOIN cliente cli ON pago.cliente_codigo = cli.codigo "
-                + "LEFT JOIN pedido ped ON pago.pedido_id_pedido = ped.id_pedido";
+        List<IngresoConDetalles> ingresos = new ArrayList<>();
+        String sql = "SELECT p.id_pedido, p.num_pedido, p.nombre AS nombre_pedido, "
+                + "c.codigo AS codigo_cliente, "
+                + "CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente, "
+                + "c.telefono AS telefono_cliente, "
+                + "c.direccion AS direccion_cliente, "
+                + "c.departamento AS departamento_cliente, "
+                + "c.municipio AS municipio_cliente, "
+                + "COALESCE(SUM(dp.subtotal), 0) AS monto_total "
+                + "FROM pedido p "
+                + "LEFT JOIN cliente c ON p.cliente_codigo = c.codigo "
+                + "LEFT JOIN detalle_pedido dp ON p.id_pedido = dp.pedido_id_pedido "
+                + "GROUP BY p.id_pedido, p.num_pedido, p.nombre, c.codigo, c.nombre, c.apellido, "
+                + "c.telefono, c.direccion, c.departamento, c.municipio";
 
-        try (Connection conn = Conexion.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql); ResultSet rs = pstmt.executeQuery()) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                Ingresos ingreso = new Ingresos();
-                ingreso.setIdAbono(rs.getInt("id_abono"));
-                ingreso.setMontoTotal(rs.getDouble("montoTotal"));
-                ingreso.setMetodoPago(rs.getString("metodo_pago"));
-                ingreso.setFechaPago(rs.getDate("fecha_pago"));
-                ingreso.setPagado(rs.getDouble("pagado"));
-                ingreso.setDebido(rs.getDouble("debido"));
-                ingreso.setIdCliente(rs.getInt("cliente_codigo"));
-                ingreso.setIdPedido(rs.getInt("pedido_id_pedido"));
-
+                int idPedido = rs.getInt("id_pedido");
+                String numPedido = rs.getString("num_pedido");
                 String nombreCliente = rs.getString("nombre_cliente");
                 String nombrePedido = rs.getString("nombre_pedido");
+                double montoTotal = rs.getDouble("monto_total");
+                int codigoCliente = rs.getInt("codigo_cliente");
+                String telefonoCliente = rs.getString("telefono_cliente");
+                String direccionCliente = rs.getString("direccion_cliente");
+                String departamentoCliente = rs.getString("departamento_cliente");
+                String municipioCliente = rs.getString("municipio_cliente");
 
-                IngresoConDetalles ingresoConDetalles = new IngresoConDetalles(ingreso, nombreCliente, null, 0.0, nombrePedido);
-                ingresosList.add(ingresoConDetalles);
+                List<Ingresos> abonos = obtenerAbonosPorPedido(idPedido);
+                double pagado = abonos.stream().mapToDouble(Ingresos::getMonto).sum();
+                double debido = montoTotal - pagado;
+
+                ingresos.add(new IngresoConDetalles(
+                        idPedido, numPedido, nombreCliente, nombrePedido,
+                        montoTotal, pagado, debido, abonos,
+                        codigoCliente, telefonoCliente, direccionCliente, departamentoCliente, municipioCliente
+                ));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return ingresosList;
+        return ingresos;
     }
 
-    public IngresoConDetalles obtenerIngresoPorId(int idAbono) {
-        String sql = "SELECT pago.*, "
-                + "CONCAT(cli.nombre, ' ', cli.apellido) AS nombre_cliente, "
-                + "ped.nombre AS nombre_pedido "
-                + "FROM pago_abono pago "
-                + "LEFT JOIN cliente cli ON pago.cliente_codigo = cli.codigo "
-                + "LEFT JOIN pedido ped ON pago.pedido_id_pedido = ped.id_pedido "
-                + "WHERE pago.id_abono = ?";
+    public List<Ingresos> obtenerAbonosPorPedido(int idPedido) {
+        List<Ingresos> abonos = new ArrayList<>();
+        String sql = "SELECT id_abono, num_abono, fecha_pago, monto, metodo_pago, referencia, observacion, pedido_id_pedido "
+                + "FROM pago_abono WHERE pedido_id_pedido = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, idPedido);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    abonos.add(new Ingresos(
+                            rs.getInt("id_abono"),
+                            rs.getInt("num_abono"), // Cambiado a rs.getInt
+                            rs.getDate("fecha_pago"),
+                            rs.getDouble("monto"),
+                            rs.getString("metodo_pago"),
+                            rs.getString("referencia"),
+                            rs.getString("observacion"),
+                            rs.getInt("pedido_id_pedido")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return abonos;
+    }
 
-        try (Connection conn = Conexion.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    public boolean registrarAbono(int idPedido, double monto, String metodoPago, String referencia, String observacion) {
+        // Cambiamos la consulta para obtener el máximo num_abono POR PEDIDO
+        String sqlSelectMax = "SELECT COALESCE(MAX(num_abono), 0) AS max_num FROM pago_abono WHERE pedido_id_pedido = ?";
+        String sqlInsert = "INSERT INTO pago_abono (pedido_id_pedido, num_abono, fecha_pago, monto, metodo_pago, referencia, observacion) "
+                + "VALUES (?, ?, NOW(), ?, ?, ?, ?)";
 
-            pstmt.setInt(1, idAbono);
-            try (ResultSet rs = pstmt.executeQuery()) {
+        int newNumAbono = 1; // Valor por defecto si es el primer abono para este pedido
+
+        try (PreparedStatement stmtSelect = conn.prepareStatement(sqlSelectMax)) {
+            stmtSelect.setInt(1, idPedido); // Filtramos por pedido_id_pedido
+            try (ResultSet rs = stmtSelect.executeQuery()) {
                 if (rs.next()) {
-                    Ingresos ingreso = new Ingresos();
-                    ingreso.setIdAbono(rs.getInt("id_abono"));
-                    ingreso.setMontoTotal(rs.getDouble("montoTotal"));
-                    ingreso.setMetodoPago(rs.getString("metodo_pago"));
-                    ingreso.setFechaPago(rs.getDate("fecha_pago"));
-                    ingreso.setPagado(rs.getDouble("pagado"));
-                    ingreso.setDebido(rs.getDouble("debido"));
-                    ingreso.setIdCliente(rs.getInt("cliente_codigo"));
-                    ingreso.setIdPedido(rs.getInt("pedido_id_pedido"));
+                    newNumAbono = rs.getInt("max_num") + 1; // Incrementamos el máximo para este pedido
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al obtener el siguiente número de abono: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
 
+        try (PreparedStatement stmt = conn.prepareStatement(sqlInsert)) {
+            stmt.setInt(1, idPedido);
+            stmt.setInt(2, newNumAbono);
+            stmt.setDouble(3, monto);
+            stmt.setString(4, metodoPago);
+            stmt.setString(5, referencia);
+            stmt.setString(6, observacion);
+
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al registrar el abono: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    public boolean eliminarAbono(int idAbono) {
+        String sql = "DELETE FROM pago_abono WHERE id_abono = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, idAbono);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean actualizarAbono(int idAbono, double monto, String metodoPago, String referencia, String observacion) {
+        String sql = "UPDATE pago_abono SET monto = ?, metodo_pago = ?, referencia = ?, observacion = ? WHERE id_abono = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDouble(1, monto);
+            stmt.setString(2, metodoPago);
+            stmt.setString(3, referencia);
+            stmt.setString(4, observacion);
+            stmt.setInt(5, idAbono);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public IngresoConDetalles obtenerDetallesIngreso(int idPedido) {
+        String sql = "SELECT p.id_pedido, p.num_pedido, p.nombre AS nombre_pedido, "
+                + "c.codigo AS codigo_cliente, "
+                + "CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente, "
+                + "c.telefono AS telefono_cliente, "
+                + "c.direccion AS direccion_cliente, "
+                + "c.departamento AS departamento_cliente, "
+                + "c.municipio AS municipio_cliente, "
+                + "COALESCE(SUM(dp.subtotal), 0) AS monto_total "
+                + "FROM pedido p "
+                + "LEFT JOIN cliente c ON p.cliente_codigo = c.codigo "
+                + "LEFT JOIN detalle_pedido dp ON p.id_pedido = dp.pedido_id_pedido "
+                + "WHERE p.id_pedido = ? "
+                + "GROUP BY p.id_pedido, p.num_pedido, p.nombre, c.codigo, c.nombre, c.apellido, "
+                + "c.telefono, c.direccion, c.departamento, c.municipio";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, idPedido);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String numPedido = rs.getString("num_pedido");
                     String nombreCliente = rs.getString("nombre_cliente");
                     String nombrePedido = rs.getString("nombre_pedido");
+                    double montoTotal = rs.getDouble("monto_total");
+                    int codigoCliente = rs.getInt("codigo_cliente");
+                    String telefonoCliente = rs.getString("telefono_cliente");
+                    String direccionCliente = rs.getString("direccion_cliente");
+                    String departamentoCliente = rs.getString("departamento_cliente");
+                    String municipioCliente = rs.getString("municipio_cliente");
 
-                    return new IngresoConDetalles(ingreso, nombreCliente, null, 0.0, nombrePedido);
+                    List<Ingresos> abonos = obtenerAbonosPorPedido(idPedido);
+                    double pagado = abonos.stream().mapToDouble(Ingresos::getMonto).sum();
+                    double debido = montoTotal - pagado;
+
+                    return new IngresoConDetalles(
+                            idPedido,
+                            numPedido,
+                            nombreCliente,
+                            nombrePedido,
+                            montoTotal,
+                            pagado,
+                            debido,
+                            abonos,
+                            codigoCliente,
+                            telefonoCliente,
+                            direccionCliente,
+                            departamentoCliente,
+                            municipioCliente
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Error al obtener detalles del ingreso: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        return null;
+    }
+
+    public Ingresos obtenerAbonoPorId(int idAbono) {
+        String sql = "SELECT * FROM pago_abono WHERE id_abono = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, idAbono);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Ingresos(
+                            rs.getInt("id_abono"),
+                            rs.getInt("num_abono"),
+                            rs.getDate("fecha_pago"),
+                            rs.getDouble("monto"),
+                            rs.getString("metodo_pago"),
+                            rs.getString("referencia"),
+                            rs.getString("observacion"),
+                            rs.getInt("pedido_id_pedido")
+                    );
                 }
             }
         } catch (SQLException e) {
@@ -240,81 +357,85 @@ public class Ctrl_CajaIngresos {
         return null;
     }
 
-    public List<PedidoConCliente> obtenerPedidosConCliente() {
-        List<PedidoConCliente> lista = new ArrayList<>();
+    public boolean eliminarIngreso(int idPedido) {
+        // 1. Primero verificar si el pago está completo
+        IngresoConDetalles ingreso = obtenerDetallesIngreso(idPedido);
 
-        String sql = "SELECT p.id_pedido, "
-                + "       p.nombre AS nombre_pedido, "
-                + "       CONCAT(c.nombre, ' ', c.apellido) AS nombre_cliente, "
-                + "       c.codigo AS id_cliente, "
-                + "       COALESCE(SUM(det.subtotal), 0.0) AS monto_total " // Corrección aquí
-                + "FROM pedido p "
-                + "LEFT JOIN cliente c ON p.cliente_codigo = c.codigo "
-                + "LEFT JOIN detalle_pedido det ON p.id_pedido = det.pedido_id_pedido "
-                + "GROUP BY p.id_pedido, p.nombre, c.codigo, c.nombre, c.apellido "
-                + "HAVING COALESCE(SUM(det.subtotal), 0.0) > 0"; // Solo pedidos con monto > 0
-
-        try (Connection con = Conexion.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-
-            System.out.println("Ejecutando consulta: " + sql); // Log para depuración
-
-            while (rs.next()) {
-                PedidoConCliente pc = new PedidoConCliente();
-                pc.setIdPedido(rs.getInt("id_pedido"));
-                pc.setNombrePedido(rs.getString("nombre_pedido"));
-                pc.setNombreCliente(rs.getString("nombre_cliente"));
-                pc.setIdCliente(rs.getInt("id_cliente"));
-                pc.setMontoTotal(rs.getDouble("monto_total"));
-
-                // Debug: Verificar valores recuperados
-                System.out.println("Pedido cargado - ID: " + pc.getIdPedido()
-                        + ", Nombre: " + pc.getNombrePedido()
-                        + ", Monto: " + pc.getMontoTotal());
-
-                lista.add(pc);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error al obtener pedidos: " + e.getMessage());
-            e.printStackTrace();
+        if (ingreso == null) {
+            JOptionPane.showMessageDialog(null, "No se encontró el pedido con ID: " + idPedido,
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
 
-        return lista;
-    }
+        // Validar que el pago esté completo (debido <= 0)
+        if (ingreso.getDebido() > 0) {
+            JOptionPane.showMessageDialog(null,
+                    "No se puede eliminar el pedido #" + ingreso.getNumPedido()
+                    + "\nRazón: Tiene un saldo pendiente de " + ingreso.getDebido(),
+                    "Pago Incompleto", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
 
-    public boolean guardarPago(PedidoConCliente pedido, double montoPagado, String metodoPago, Date fechaPago) {
-        String sql = "INSERT INTO pago_abono (montoTotal, metodo_pago, fecha_pago, "
-                + "pagado, debido, cliente_codigo, pedido_id_pedido) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        Connection conn = null;
+        try {
+            conn = Conexion.getConnection();
+            conn.setAutoCommit(false); // Iniciar transacción
 
-        try (Connection con = Conexion.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
-
-            // Validar que el pedido tenga cliente asociado
-            if (pedido.getIdCliente() == null) {
-                throw new SQLException("El pedido no tiene cliente asociado");
-            }
-
-            // Calcular valores
-            double debido = pedido.getMontoTotal() - montoPagado;
-
-            // Setear parámetros
-            ps.setDouble(1, montoPagado); // montoTotal (el monto del abono)
-            ps.setString(2, metodoPago);
-            ps.setDate(3, new java.sql.Date(fechaPago.getTime()));
-            ps.setDouble(4, montoPagado); // pagado
-            ps.setDouble(5, debido); // debido
-            ps.setInt(6, pedido.getIdCliente()); // cliente_codigo
-            ps.setInt(7, pedido.getIdPedido()); // pedido_id_pedido
-
-            int rowsAffected = ps.executeUpdate();
-            if (rowsAffected <= 0) {
-                System.err.println("No se insertó ninguna fila en pago_abono");
+            // 2. Eliminar primero los abonos relacionados
+            if (!eliminarAbonosPorPedido(conn, idPedido)) {
+                conn.rollback();
                 return false;
             }
+
+            // 3. Eliminar el registro de caja principal
+            if (!eliminarRegistroCaja(conn, idPedido)) {
+                conn.rollback();
+                return false;
+            }
+
+            conn.commit(); // Confirmar transacción
             return true;
 
-        } catch (SQLException e) {
-            System.err.println("Error al guardar pago: " + e.getMessage());
-            throw new RuntimeException("Error al guardar el pago en la base de datos: " + e.getMessage(), e);
+        } catch (SQLException ex) {
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (SQLException e) {
+                System.err.println("Error al hacer rollback: " + e.getMessage());
+            }
+            JOptionPane.showMessageDialog(null, "Error al eliminar ingreso: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        } finally {
+            try {
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (SQLException ex) {
+                System.err.println("Error al cerrar conexión: " + ex.getMessage());
+            }
+        }
+    }
+
+// Método auxiliar para eliminar abonos de un pedido
+    private boolean eliminarAbonosPorPedido(Connection conn, int idPedido) throws SQLException {
+        String sql = "DELETE FROM pago_abono WHERE pedido_id_pedido = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, idPedido);
+            stmt.executeUpdate();
+            return true; // Consideramos éxito incluso si no había abonos (0 filas afectadas)
+        }
+    }
+
+// Método auxiliar para eliminar registro de caja
+    private boolean eliminarRegistroCaja(Connection conn, int idPedido) throws SQLException {
+        String sql = "DELETE FROM caja WHERE id_pedido = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, idPedido);
+            int affectedRows = stmt.executeUpdate();
+            return affectedRows > 0;
         }
     }
 

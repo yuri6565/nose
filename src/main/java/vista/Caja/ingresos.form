@@ -77,40 +77,6 @@
             </Constraint>
           </Constraints>
         </Component>
-        <Component class="RSMaterialComponent.RSButtonShape" name="btnNuevo">
-          <Properties>
-            <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="52" green="31" red="2e" type="rgb"/>
-            </Property>
-            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-              <Border info="org.netbeans.modules.form.compat2.border.CompoundBorderInfo">
-                <CompoundBorder/>
-              </Border>
-            </Property>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/plus (2).png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value=" Nuevo"/>
-            <Property name="backgroundHover" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="d1" green="96" red="43" type="rgb"/>
-            </Property>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-              <Font name="Roboto Bold" size="16" style="1"/>
-            </Property>
-            <Property name="forma" type="RSMaterialComponent.RSButtonShape$FORMA" editor="org.netbeans.modules.form.editors.EnumEditor">
-              <Value id="ROUND"/>
-            </Property>
-            <Property name="horizontalAlignment" type="int" value="0"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnNuevoActionPerformed"/>
-          </Events>
-          <Constraints>
-            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="990" y="40" width="110" height="30"/>
-            </Constraint>
-          </Constraints>
-        </Component>
         <Component class="RSMaterialComponent.RSButtonShape" name="btnEliminar1">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
@@ -152,7 +118,7 @@
           </AuxValues>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout" value="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout$AbsoluteConstraintsDescription">
-              <AbsoluteConstraints x="40" y="100" width="1210" height="500"/>
+              <AbsoluteConstraints x="40" y="100" width="1190" height="500"/>
             </Constraint>
           </Constraints>
 
@@ -161,17 +127,19 @@
             <Component class="RSMaterialComponent.RSTableMetroCustom" name="Tabla1">
               <Properties>
                 <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                  <Table columnCount="8" rowCount="3">
-                    <Column editable="true" title="Codigo" type="java.lang.Integer"/>
-                    <Column editable="true" title="Pedido" type="java.lang.String"/>
-                    <Column editable="true" title="Cliente" type="java.lang.Integer"/>
-                    <Column editable="true" title="Monto total" type="java.lang.Double"/>
-                    <Column editable="true" title="Pagado" type="java.lang.Double"/>
-                    <Column editable="true" title="Debido" type="java.lang.Double"/>
-                    <Column editable="false" title="Detalle" type="java.lang.String"/>
+                  <Table columnCount="9" rowCount="3">
+                    <Column editable="false" title="ID pedido" type="java.lang.String"/>
+                    <Column editable="false" title="Nombre pedido" type="java.lang.String"/>
+                    <Column editable="false" title="Cliente" type="java.lang.Object"/>
+                    <Column editable="false" title="Monto total" type="java.lang.Double"/>
+                    <Column editable="false" title="Pagado" type="java.lang.Double"/>
+                    <Column editable="false" title="Debido" type="java.lang.Double"/>
+                    <Column editable="false" title="Abonar" type="java.lang.Object"/>
+                    <Column editable="false" title="Detalle" type="java.lang.Object"/>
                     <Column editable="false" title="Acciones" type="java.lang.Object"/>
                   </Table>
                 </Property>
+                <Property name="toolTipText" type="java.lang.String" value=""/>
                 <Property name="backgoundHead" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="52" green="31" red="2e" type="rgb"/>
                 </Property>

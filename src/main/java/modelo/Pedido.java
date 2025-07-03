@@ -5,6 +5,7 @@
 package modelo;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  *
@@ -12,18 +13,20 @@ import java.util.Date;
  */
 public class Pedido {
     private int id_pedido;
+    private String num_pedido;
     private String nombre;
     private String estado;
     private Date fecha_inicio;
     private Date fecha_fin;
     private int idCliente;
+    private List<PedidoDetalle> detalles;
 
     public Pedido() {
     }
 
-
-    public Pedido(int id_pedido, String nombre, String estado, Date fecha_inicio, Date fecha_fin, int idCliente) {
+    public Pedido(int id_pedido, String num_pedido, String nombre, String estado, Date fecha_inicio, Date fecha_fin, int idCliente) {
         this.id_pedido = id_pedido;
+        this.num_pedido = num_pedido;
         this.nombre = nombre;
         this.estado = estado;
         this.fecha_inicio = fecha_inicio;
@@ -37,6 +40,14 @@ public class Pedido {
 
     public void setId_pedido(int id_pedido) {
         this.id_pedido = id_pedido;
+    }
+
+    public String getNum_pedido() {
+        return num_pedido;
+    }
+
+    public void setNum_pedido(String num_pedido) {
+        this.num_pedido = num_pedido;
     }
 
     public String getNombre() {
@@ -78,6 +89,15 @@ public class Pedido {
     public void setIdCliente(int idCliente) {
         this.idCliente = idCliente;
     }
+    
+    public List<PedidoDetalle> getDetalles() {
+        return detalles;
+    }
+
+    public void setDetalles(List<PedidoDetalle> detalles) {
+        this.detalles = detalles;
+    }
+
     
 }
 
