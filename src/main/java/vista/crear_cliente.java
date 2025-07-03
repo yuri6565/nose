@@ -4,8 +4,6 @@
  */
 package vista;
 
-
-
 import controlador.Ctrl_Cliente;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -21,43 +19,41 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 
-
-
 /**
  *
  * @author ZenBook
  */
-
 public class crear_cliente extends javax.swing.JDialog {
- 
+
     private String[] datos; // Almacena los datos ingresados
     private boolean guardado = false; // Indica si se presionó "Guardar"
-private HashMap<String, String[]> municipiosPorDepartamento = new HashMap<>();
+    private HashMap<String, String[]> municipiosPorDepartamento = new HashMap<>();
+
     /**
      * Creates new form nuevoMateriales
      */
     public crear_cliente(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         setTitle("Nuevo Material");
         tipoidentificacion.setVisible(false);
-    numero.setVisible(false);
-    nombre.setVisible(false);
-    telefono.setVisible(false);
-    dirección1.setVisible(false); // Municipio (optional)
-    labeldireccion.setVisible(false); // Descripción adicional (optional)
-    dirección4.setVisible(false); // Unused
-    dirección3.setVisible(false);
-    telefono1.setVisible(false);
-    agregarValidacion();
-    inicializarMunicipios();
-    agregarListenerDepartamento();
-            configurarFiltroTexto();
+        numero.setVisible(false);
+        nombre.setVisible(false);
+        telefono.setVisible(false);
+        dirección1.setVisible(false); // Municipio (optional)
+        labeldireccion.setVisible(false); // Descripción adicional (optional)
+        dirección4.setVisible(false); // Unused
+        dirección3.setVisible(false);
+        telefono1.setVisible(false);
+        agregarValidacion();
+        inicializarMunicipios();
+        agregarListenerDepartamento();
+        configurarFiltroTexto();
 
     }
-    
-        public String[] getDatos() {
+
+    public String[] getDatos() {
         return datos;
     }
 
@@ -65,7 +61,7 @@ private HashMap<String, String[]> municipiosPorDepartamento = new HashMap<>();
     public boolean isGuardado() {
         return guardado;
     }
-    
+
     // Interfaz para el callback
     public interface ClienteGuardadoListener {
 
@@ -78,176 +74,176 @@ private HashMap<String, String[]> municipiosPorDepartamento = new HashMap<>();
     public void setClienteGuardadoListener(ClienteGuardadoListener listener) {
         this.listener = listener;
     }
-    
+
     private void inicializarMunicipios() {
-    // Definir municipios por departamento
-municipiosPorDepartamento.put("Bogotá DC", new String[]{
-    "Seleccione",
-    "Antonio Nariño",
-    "Barrios Unidos",
-    "Bosa",
-    "Chapinero",
-    "Ciudad Bolívar",
-    "Engativá",
-    "Fontibón",
-    "Kennedy",
-    "La Candelaria",
-    "Los Mártires",
-    "Puente Aranda",
-    "Rafael Uribe Uribe",
-    "San Cristóbal",
-    "Santa Fe",
-    "Suba",
-    "Sumapaz",
-    "Teusaquillo",
-    "Tunjuelito",
-    "Usaquén",
-    "Usme"
-});
-municipiosPorDepartamento.put("Boyacá", new String[]{
-    "Seleccione",
-    "Almeida",
-    "Aquitania",
-    "Arcabuco",
-    "Belén",
-    "Berbeo",
-    "Betéitiva",
-    "Boavita",
-    "Boyacá",
-    "Briceño",
-    "Buenavista",
-    "Busbanzá",
-    "Caldas",
-    "Campohermoso",
-    "Cerinza",
-    "Chinavita",
-    "Chiquinquirá",
-    "Chíquiza",
-    "Chiscas",
-    "Chita",
-    "Chitaraque",
-    "Chivatá",
-    "Chivor",
-    "Ciénaga",
-    "Cómbita",
-    "Coper",
-    "Corrales",
-    "Covarachía",
-    "Cubará",
-    "Cucaita",
-    "Cuítiva",
-    "Duitama",
-    "El Cocuy",
-    "El Espino",
-    "Firavitoba",
-    "Floresta",
-    "Gachantivá",
-    "Gámeza",
-    "Garagoa",
-    "Guacamayas",
-    "Guateque",
-    "Guayatá",
-    "Güicán",
-    "Iza",
-    "Jenesano",
-    "Jericó",
-    "Labranzagrande",
-    "La Capilla",
-    "La Uvita",
-    "La Victoria",
-    "Macanal",
-    "Maripí",
-    "Miraflores",
-    "Mongua",
-    "Monguí",
-    "Moniquirá",
-    "Motavita",
-    "Muzo",
-    "Nobsa",
-    "Nuevo Colón",
-    "Oicatá",
-    "Otanche",
-    "Pachavita",
-    "Paéz",
-    "Paipa",
-    "Pajarito",
-    "Panqueba",
-    "Pauna",
-    "Paya",
-    "Paz de Río",
-    "Pesca",
-    "Pisba",
-    "Puerto Boyacá",
-    "Quípama",
-    "Ramiriquí",
-    "Ráquira",
-    "Rondón",
-    "Saboyá",
-    "Sáchica",
-    "Samacá",
-    "San Eduardo",
-    "San José de Pare",
-    "San Luis de Gaceno",
-    "San Mateo",
-    "San Miguel de Sema",
-    "San Pablo de Borbur",
-    "Santa María",
-    "Santa Rosa de Viterbo",
-    "Santa Sofía",
-    "Santana",
-    "Sativanorte",
-    "Sativasur",
-    "Siachoque",
-    "Soatá",
-    "Socha",
-    "Socotá",
-    "Sogamoso",
-    "Somondoco",
-    "Sora",
-    "Soracá",
-    "Sotaquirá",
-    "Susacón",
-    "Sutamarchán",
-    "Sutatenza",
-    "Tasco",
-    "Tenza",
-    "Tibaná",
-    "Tibasosa",
-    "Tinjacá",
-    "Tipacoque",
-    "Toca",
-    "Togüí",
-    "Tópaga",
-    "Tota",
-    "Tunja",
-    "Tununguá",
-    "Turmequé",
-    "Tuta",
-    "Tutazá",
-    "Úmbita",
-    "Ventaquemada",
-    "Villa de Leyva",
-    "Viracachá",
-    "Zetaquirá"
-});
-    // Establecer el modelo inicial para gh (municipios)
-    gh.setModel(new javax.swing.DefaultComboBoxModel(municipiosPorDepartamento.get("Bogotá DC")));
-}
-    
-    
-    private void agregarListenerDepartamento() {
-    gh1.addItemListener(new ItemListener() {
-        @Override
-        public void itemStateChanged(ItemEvent e) {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                String departamentoSeleccionado = gh1.getSelectedItem().toString();
-                String[] municipios = municipiosPorDepartamento.getOrDefault(departamentoSeleccionado, new String[]{"Seleccione"});
-                gh.setModel(new javax.swing.DefaultComboBoxModel(municipios));
-            }
-        }
-    });
+        // Definir municipios por departamento
+        municipiosPorDepartamento.put("Bogotá DC", new String[]{
+            "Seleccione",
+            "Antonio Nariño",
+            "Barrios Unidos",
+            "Bosa",
+            "Chapinero",
+            "Ciudad Bolívar",
+            "Engativá",
+            "Fontibón",
+            "Kennedy",
+            "La Candelaria",
+            "Los Mártires",
+            "Puente Aranda",
+            "Rafael Uribe Uribe",
+            "San Cristóbal",
+            "Santa Fe",
+            "Suba",
+            "Sumapaz",
+            "Teusaquillo",
+            "Tunjuelito",
+            "Usaquén",
+            "Usme"
+        });
+        municipiosPorDepartamento.put("Boyacá", new String[]{
+            "Seleccione",
+            "Almeida",
+            "Aquitania",
+            "Arcabuco",
+            "Belén",
+            "Berbeo",
+            "Betéitiva",
+            "Boavita",
+            "Boyacá",
+            "Briceño",
+            "Buenavista",
+            "Busbanzá",
+            "Caldas",
+            "Campohermoso",
+            "Cerinza",
+            "Chinavita",
+            "Chiquinquirá",
+            "Chíquiza",
+            "Chiscas",
+            "Chita",
+            "Chitaraque",
+            "Chivatá",
+            "Chivor",
+            "Ciénaga",
+            "Cómbita",
+            "Coper",
+            "Corrales",
+            "Covarachía",
+            "Cubará",
+            "Cucaita",
+            "Cuítiva",
+            "Duitama",
+            "El Cocuy",
+            "El Espino",
+            "Firavitoba",
+            "Floresta",
+            "Gachantivá",
+            "Gámeza",
+            "Garagoa",
+            "Guacamayas",
+            "Guateque",
+            "Guayatá",
+            "Güicán",
+            "Iza",
+            "Jenesano",
+            "Jericó",
+            "Labranzagrande",
+            "La Capilla",
+            "La Uvita",
+            "La Victoria",
+            "Macanal",
+            "Maripí",
+            "Miraflores",
+            "Mongua",
+            "Monguí",
+            "Moniquirá",
+            "Motavita",
+            "Muzo",
+            "Nobsa",
+            "Nuevo Colón",
+            "Oicatá",
+            "Otanche",
+            "Pachavita",
+            "Paéz",
+            "Paipa",
+            "Pajarito",
+            "Panqueba",
+            "Pauna",
+            "Paya",
+            "Paz de Río",
+            "Pesca",
+            "Pisba",
+            "Puerto Boyacá",
+            "Quípama",
+            "Ramiriquí",
+            "Ráquira",
+            "Rondón",
+            "Saboyá",
+            "Sáchica",
+            "Samacá",
+            "San Eduardo",
+            "San José de Pare",
+            "San Luis de Gaceno",
+            "San Mateo",
+            "San Miguel de Sema",
+            "San Pablo de Borbur",
+            "Santa María",
+            "Santa Rosa de Viterbo",
+            "Santa Sofía",
+            "Santana",
+            "Sativanorte",
+            "Sativasur",
+            "Siachoque",
+            "Soatá",
+            "Socha",
+            "Socotá",
+            "Sogamoso",
+            "Somondoco",
+            "Sora",
+            "Soracá",
+            "Sotaquirá",
+            "Susacón",
+            "Sutamarchán",
+            "Sutatenza",
+            "Tasco",
+            "Tenza",
+            "Tibaná",
+            "Tibasosa",
+            "Tinjacá",
+            "Tipacoque",
+            "Toca",
+            "Togüí",
+            "Tópaga",
+            "Tota",
+            "Tunja",
+            "Tununguá",
+            "Turmequé",
+            "Tuta",
+            "Tutazá",
+            "Úmbita",
+            "Ventaquemada",
+            "Villa de Leyva",
+            "Viracachá",
+            "Zetaquirá"
+        });
+        // Establecer el modelo inicial para gh (municipios)
+        gh.setModel(new javax.swing.DefaultComboBoxModel(municipiosPorDepartamento.get("Bogotá DC")));
     }
- private void agregarValidacion() {
+
+    private void agregarListenerDepartamento() {
+        gh1.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    String departamentoSeleccionado = gh1.getSelectedItem().toString();
+                    String[] municipios = municipiosPorDepartamento.getOrDefault(departamentoSeleccionado, new String[]{"Seleccione"});
+                    gh.setModel(new javax.swing.DefaultComboBoxModel(municipios));
+                }
+            }
+        });
+    }
+
+    private void agregarValidacion() {
         // Validación y navegación para identificaciontxt
         gh.addFocusListener(new FocusAdapter() {
             @Override
@@ -272,7 +268,6 @@ municipiosPorDepartamento.put("Boyacá", new String[]{
             }
         });
 
-
         // Validación y navegación para nombretxt
         nombretxt.addFocusListener(new FocusAdapter() {
             @Override
@@ -292,6 +287,7 @@ municipiosPorDepartamento.put("Boyacá", new String[]{
                     nombre.setVisible(false);
                 }
             }
+
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -338,6 +334,7 @@ municipiosPorDepartamento.put("Boyacá", new String[]{
                     telefono.setVisible(false);
                 }
             }
+
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
@@ -346,7 +343,6 @@ municipiosPorDepartamento.put("Boyacá", new String[]{
             }
         });
 
-   
         // Validación y navegación para direcciontxt2 (descripción adicional, opcional)
         direcciontxt2.addFocusListener(new FocusAdapter() {
             @Override
@@ -363,6 +359,7 @@ municipiosPorDepartamento.put("Boyacá", new String[]{
             }
         });
     }
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -745,93 +742,93 @@ municipiosPorDepartamento.put("Boyacá", new String[]{
     }//GEN-LAST:event_nombretxtActionPerformed
 
     private void btnCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelarActionPerformed
-guardado = false;
+        guardado = false;
         setVisible(false); // Cerrar el diálogo
     }//GEN-LAST:event_btnCancelarActionPerformed
 
     private void btnGuardarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGuardarActionPerformed
-    Ctrl_Cliente controlador = new Ctrl_Cliente();
-    StringBuilder errores = new StringBuilder();
+        Ctrl_Cliente controlador = new Ctrl_Cliente();
+        StringBuilder errores = new StringBuilder();
 
-    // Obtener y limpiar datos
-    String tipoIdentificacion = identificaciontxt.getSelectedItem().toString();
-    String numeroStr = numerotxt.getText().trim();
-    String nombre = nombretxt.getText().trim();
-    String apellido = apellidotxt.getText().trim();
-    String telefono = telefonotxt.getText().trim();
-    String telefono2 = telefonotxt1.getText().trim(); // Nuevo campo
-    String direccion = direcciontxt.getText().trim();
-    String departamento = gh1.getSelectedItem().toString();
-    String municipio = gh.getSelectedItem().toString();
-    String descripcionAdicional = direcciontxt2.getText().trim();
+        // Obtener y limpiar datos
+        String tipoIdentificacion = identificaciontxt.getSelectedItem().toString();
+        String numeroStr = numerotxt.getText().trim();
+        String nombre = nombretxt.getText().trim();
+        String apellido = apellidotxt.getText().trim();
+        String telefono = telefonotxt.getText().trim();
+        String telefono2 = telefonotxt1.getText().trim(); // Nuevo campo
+        String direccion = direcciontxt.getText().trim();
+        String departamento = gh1.getSelectedItem().toString();
+        String municipio = gh.getSelectedItem().toString();
+        String descripcionAdicional = direcciontxt2.getText().trim();
 
-    // Validar campos obligatorios
-    if (tipoIdentificacion.equals("Seleccionar")) {
-        errores.append("Seleccione un tipo de identificación válido.\n");
-    }
-    if (numeroStr.isEmpty()) {
-        errores.append("El número de identificación es obligatorio.\n");
-    }
-    if (nombre.isEmpty()) {
-        errores.append("El nombre es obligatorio.\n");
-    }
-    if (telefono.isEmpty()) {
-        errores.append("El teléfono es obligatorio.\n");
-    }
-    if (direccion.isEmpty()) {
-        errores.append("La dirección es obligatoria.\n");
-    }
-    if (departamento.equals("Seleccionar")) {
-        errores.append("Seleccione un departamento válido.\n");
-    }
-    if (municipio.equals("Seleccione")) {
-        errores.append("Seleccione un municipio válido.\n");
-    }
-
-    // Validar formato del número
-    int numero = 0;
-    try {
-        numero = Integer.parseInt(numeroStr);
-    } catch (NumberFormatException e) {
-        errores.append("El número de identificación debe ser numérico.\n");
-    }
-
-    // Validar formato del teléfono
-    if (!telefono.matches("\\d{7,15}")) {
-        errores.append("El teléfono debe contener 7-15 dígitos.\n");
-    }
-
-    // Mostrar errores si los hay
-    if (errores.length() > 0) {
-        JOptionPane.showMessageDialog(this, errores.toString(), "Errores de Validación", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-
-    // Crear objeto Cliente con campos separados
-    modelo.Cliente cliente = new modelo.Cliente();
-    cliente.setIdentificacion(tipoIdentificacion);
-    cliente.setId_cliente(numero);
-    cliente.setNombre(nombre);
-    cliente.setApellido(apellido.isEmpty() ? null : apellido);
-    cliente.setTelefono(telefono);
-    cliente.setTelefono2(telefono2.isEmpty() ? null : telefono2); // Nuevo campo
-    cliente.setDepartamento(departamento);
-    cliente.setMunicipio(municipio);
-    cliente.setDireccion(direccion); // Solo la dirección básica
-    cliente.setActivo(true); // Valor predeterminado
-
-    // Guardar cliente
-    if (controlador.guardar(cliente)) {
-        JOptionPane.showMessageDialog(this, "Cliente guardado correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-        guardado = true;
-        datos = new String[]{tipoIdentificacion, String.valueOf(numero), nombre, apellido, telefono, direccion};
-        if (listener != null) {
-            listener.onClienteGuardado();
+        // Validar campos obligatorios
+        if (tipoIdentificacion.equals("Seleccionar")) {
+            errores.append("Seleccione un tipo de identificación válido.\n");
         }
-        setVisible(false);
-    } else {
-        JOptionPane.showMessageDialog(this, "Error al guardar el cliente", "Error", JOptionPane.ERROR_MESSAGE);
-    }
+        if (numeroStr.isEmpty()) {
+            errores.append("El número de identificación es obligatorio.\n");
+        }
+        if (nombre.isEmpty()) {
+            errores.append("El nombre es obligatorio.\n");
+        }
+        if (telefono.isEmpty()) {
+            errores.append("El teléfono es obligatorio.\n");
+        }
+        if (direccion.isEmpty()) {
+            errores.append("La dirección es obligatoria.\n");
+        }
+        if (departamento.equals("Seleccionar")) {
+            errores.append("Seleccione un departamento válido.\n");
+        }
+        if (municipio.equals("Seleccione")) {
+            errores.append("Seleccione un municipio válido.\n");
+        }
+
+        // Validar formato del número
+        int numero = 0;
+        try {
+            numero = Integer.parseInt(numeroStr);
+        } catch (NumberFormatException e) {
+            errores.append("El número de identificación debe ser numérico.\n");
+        }
+
+        // Validar formato del teléfono
+        if (!telefono.matches("\\d{7,15}")) {
+            errores.append("El teléfono debe contener 7-15 dígitos.\n");
+        }
+
+        // Mostrar errores si los hay
+        if (errores.length() > 0) {
+            JOptionPane.showMessageDialog(this, errores.toString(), "Errores de Validación", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Crear objeto Cliente con campos separados
+        modelo.Cliente cliente = new modelo.Cliente();
+        cliente.setIdentificacion(tipoIdentificacion);
+        cliente.setId_cliente(numero);
+        cliente.setNombre(nombre);
+        cliente.setApellido(apellido.isEmpty() ? null : apellido);
+        cliente.setTelefono(telefono);
+        cliente.setTelefono2(telefono2.isEmpty() ? null : telefono2); // Nuevo campo
+        cliente.setDepartamento(departamento);
+        cliente.setMunicipio(municipio);
+        cliente.setDireccion(direccion); // Solo la dirección básica
+        cliente.setActivo(true); // Valor predeterminado
+
+        // Guardar cliente
+        if (controlador.guardar(cliente)) {
+            JOptionPane.showMessageDialog(this, "Cliente guardado correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            guardado = true;
+            datos = new String[]{tipoIdentificacion, String.valueOf(numero), nombre, apellido, telefono, direccion};
+            if (listener != null) {
+                listener.onClienteGuardado();
+            }
+            setVisible(false);
+        } else {
+            JOptionPane.showMessageDialog(this, "Error al guardar el cliente", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_btnGuardarActionPerformed
 
     private void numerotxtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numerotxtActionPerformed
@@ -880,7 +877,7 @@ guardado = false;
 
     /**
      */
-   public static void main(String args[]) {
+    public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
