@@ -53,12 +53,18 @@ public class NuevaContrasena extends javax.swing.JFrame {
 
     public NuevaContrasena() {
         initComponents();
+        // Enter en la primera contraseña: enfocar la segunda
+txtcontrasenanueva.addActionListener(e -> txtcontrasenanueva1.requestFocus());
 
-        // Cargar íconos
-        eyeOpenIcon = new ImageIcon(getClass().getResource(eyeOpenPath));
-        eyeClosedIcon = new ImageIcon(getClass().getResource(eyeClosedPath));
-        btnVer.setIcon(eyeClosedIcon); // Ícono inicial
-        btnVer1.setIcon(eyeClosedIcon); // Ícono inicial para el segundo campo
+// Enter en la segunda contraseña: activar botón "Continuar"
+txtcontrasenanueva1.addActionListener(e -> iniciar.doClick());
+
+
+//        // Cargar íconos
+//        eyeOpenIcon = new ImageIcon(getClass().getResource(eyeOpenPath));
+//        eyeClosedIcon = new ImageIcon(getClass().getResource(eyeClosedPath));
+//        btnVer.setIcon(eyeClosedIcon); // Ícono inicial
+//        btnVer1.setIcon(eyeClosedIcon); // Ícono inicial para el segundo campo
 
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
@@ -74,32 +80,11 @@ public class NuevaContrasena extends javax.swing.JFrame {
         fondo.add(kGradientPanel1, BorderLayout.CENTER);
         setContentPane(fondo);
 
-        // Agregar listeners para validación y tooltip
-        txtcontrasenanueva.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                validarPassword();
-            }
-        });
-        txtcontrasenanueva1.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                validarPassword();
-            }
-        });
 
-        txtcontrasenanueva.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                ocultarTooltip();
-            }
-        });
-        txtcontrasenanueva1.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                ocultarTooltip();
-            }
-        });
+
+      
+
+   
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -120,9 +105,7 @@ public class NuevaContrasena extends javax.swing.JFrame {
         jLabel10 = new javax.swing.JLabel();
         iniciar = new RSMaterialComponent.RSButtonShape();
         txtcontrasenanueva = new RSMaterialComponent.RSPasswordIconOne();
-        btnVer = new rojeru_san.RSButton();
         txtcontrasenanueva1 = new RSMaterialComponent.RSPasswordIconOne();
-        btnVer1 = new rojeru_san.RSButton();
         jLabel12 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -199,16 +182,6 @@ public class NuevaContrasena extends javax.swing.JFrame {
         });
         jPanel6.add(txtcontrasenanueva, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 310, 390, 40));
 
-        btnVer.setBackground(new java.awt.Color(236, 236, 236));
-        btnVer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ojo (2).png"))); // NOI18N
-        btnVer.setColorHover(new java.awt.Color(247, 247, 247));
-        btnVer.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnVerActionPerformed(evt);
-            }
-        });
-        jPanel6.add(btnVer, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 310, 30, 40));
-
         txtcontrasenanueva1.setForeground(new java.awt.Color(0, 0, 0));
         txtcontrasenanueva1.setToolTipText("");
         txtcontrasenanueva1.setBorderColor(new java.awt.Color(230, 230, 230));
@@ -221,16 +194,6 @@ public class NuevaContrasena extends javax.swing.JFrame {
             }
         });
         jPanel6.add(txtcontrasenanueva1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 390, 390, 40));
-
-        btnVer1.setBackground(new java.awt.Color(236, 236, 236));
-        btnVer1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/ojo (2).png"))); // NOI18N
-        btnVer1.setColorHover(new java.awt.Color(247, 247, 247));
-        btnVer1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnVer1ActionPerformed(evt);
-            }
-        });
-        jPanel6.add(btnVer1, new org.netbeans.lib.awtextra.AbsoluteConstraints(420, 390, 30, 40));
 
         jLabel12.setFont(new java.awt.Font("SansSerif", 1, 16)); // NOI18N
         jLabel12.setText("Contraseña:");
@@ -255,44 +218,46 @@ public class NuevaContrasena extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jLabel8MousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel8MousePressed
-
+  Login1121 login = new Login1121();
+        login.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_jLabel8MousePressed
 
     private void iniciarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_iniciarActionPerformed
-String nuevaContrasena = txtcontrasenanueva.getText().trim();
+ String nuevaContrasena = txtcontrasenanueva.getText().trim();
         String confirmarContrasena = txtcontrasenanueva1.getText().trim();
 
+        // Validar campos vacíos
         if (nuevaContrasena.isEmpty() || confirmarContrasena.isEmpty()) {
-            AlertaUsuarioE confirmDialog = new AlertaUsuarioE((Frame) this, true);
-            confirmDialog.setVisible(true);
+            JOptionPane.showMessageDialog(this, "Por favor, complete ambos campos de contraseña.", "Campos vacíos", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
+        // Validar que coincidan
         if (!nuevaContrasena.equals(confirmarContrasena)) {
-            AlertaUsuarioE confirmDialog = new AlertaUsuarioE((Frame) this, true);
-            confirmDialog.setVisible(true);
+            JOptionPane.showMessageDialog(this, "Las contraseñas no coinciden.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        // Validar formato
         String regex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
         if (!nuevaContrasena.matches(regex)) {
-            AlertaReestablecerContrasena confirmDialog = new AlertaReestablecerContrasena((Frame) this, true);
-            confirmDialog.setVisible(true);
+            JOptionPane.showMessageDialog(this,
+                    "La contraseña debe tener mínimo 8 caracteres,\nuna mayúscula, una minúscula, un número y un carácter especial.",
+                    "Contraseña inválida", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        // Guardar
         Consulta_Usuarios controlador = new Consulta_Usuarios();
         boolean cambioExitoso = controlador.actualizarContrasena(correoIngresado, nuevaContrasena);
+
         if (cambioExitoso) {
-            AlertaCambioContraseña confirmDialog = new AlertaCambioContraseña((Frame) this, true);
-            confirmDialog.setVisible(true);
+            JOptionPane.showMessageDialog(this, "¡Contraseña actualizada con éxito!", "Éxito", JOptionPane.INFORMATION_MESSAGE);
             this.dispose();
-            Login1121 login = new Login1121();
-            login.setVisible(true);
+            new Login1121().setVisible(true);
         } else {
-            AlertaUsuarioE confirmDialog = new AlertaUsuarioE((Frame) this, true);
-            confirmDialog.setVisible(true);
-            this.dispose();
+            JOptionPane.showMessageDialog(this, "Hubo un error al actualizar la contraseña.", "Error", JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_iniciarActionPerformed
@@ -301,16 +266,9 @@ String nuevaContrasena = txtcontrasenanueva.getText().trim();
 
     }//GEN-LAST:event_txtcontrasenanuevaActionPerformed
 
-    private void btnVerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVerActionPerformed
-        togglePasswordVisibility();
-    }//GEN-LAST:event_btnVerActionPerformed
-
     private void txtcontrasenanueva1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtcontrasenanueva1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtcontrasenanueva1ActionPerformed
-
-    private void btnVer1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnVer1ActionPerformed
-    }//GEN-LAST:event_btnVer1ActionPerformed
 
     /**
      * @param context
@@ -349,8 +307,6 @@ String nuevaContrasena = txtcontrasenanueva.getText().trim();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private rojeru_san.RSButton btnVer;
-    private rojeru_san.RSButton btnVer1;
     private RSMaterialComponent.RSButtonShape iniciar;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -364,73 +320,30 @@ String nuevaContrasena = txtcontrasenanueva.getText().trim();
     private RSMaterialComponent.RSPasswordIconOne txtcontrasenanueva;
     private RSMaterialComponent.RSPasswordIconOne txtcontrasenanueva1;
     // End of variables declaration//GEN-END:variables
-private void togglePasswordVisibility() {
-        if (isPasswordVisible) {
-            txtcontrasenanueva.setEchoChar('•');
-            btnVer.setIcon(eyeClosedIcon);
-        } else {
-            txtcontrasenanueva.setEchoChar((char) 0);
-            btnVer.setIcon(eyeOpenIcon);
-        }
-        isPasswordVisible = !isPasswordVisible;
-    }
+//private void togglePasswordVisibility() {
+//        if (isPasswordVisible) {
+//            txtcontrasenanueva.setEchoChar('•');
+//            btnVer.setIcon(eyeClosedIcon);
+//        } else {
+//            txtcontrasenanueva.setEchoChar((char) 0);
+//            btnVer.setIcon(eyeOpenIcon);
+//        }
+//        isPasswordVisible = !isPasswordVisible;
+//    }
+//
+//    private void togglePasswordVisibility1() {
+//        if (isPasswordVisible1) {
+//            txtcontrasenanueva1.setEchoChar('•');
+//            btnVer1.setIcon(eyeClosedIcon);
+//        } else {
+//            txtcontrasenanueva1.setEchoChar((char) 0);
+//            btnVer1.setIcon(eyeOpenIcon);
+//        }
+//        isPasswordVisible1 = !isPasswordVisible1;
+//    }
 
-    private void togglePasswordVisibility1() {
-        if (isPasswordVisible1) {
-            txtcontrasenanueva1.setEchoChar('•');
-            btnVer1.setIcon(eyeClosedIcon);
-        } else {
-            txtcontrasenanueva1.setEchoChar((char) 0);
-            btnVer1.setIcon(eyeOpenIcon);
-        }
-        isPasswordVisible1 = !isPasswordVisible1;
-    }
+   
 
-    private void validarPassword() {
-        String pass1 = txtcontrasenanueva.getText().trim();
-        String pass2 = txtcontrasenanueva1.getText().trim();
 
-        String regex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
-
-        if (!pass1.matches(regex) || !pass2.matches(regex) || !pass1.equals(pass2)) {
-            mostrarTooltip("Debe contener mínimo 8 caracteres, incluyendo al menos una mayúscula, una minúscula, un número y un carácter especial (como !, @, #, etc).");
-        }
-    }
-
-    private void mostrarTooltip(String mensaje) {
-        if (tooltip != null) remove(tooltip);
-
-        tooltip = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                g.setColor(new Color(200, 55, 55)); // Fondo rojo similar a la imagen
-                g.fillRoundRect(0, 0, getWidth() - 10, getHeight(), 10, 10);
-
-                int[] x = {getWidth() - 10, getWidth(), getWidth() - 10}; // Triángulo para la flecha
-                int[] y = {15, 20, 25};
-                g.fillPolygon(x, y, 3);
-            }
-        };
-        tooltip.setLayout(new BorderLayout());
-        JLabel lbl = new JLabel("<html><body style='width: 200px; color: white;'>" + mensaje + "</body></html>");
-        lbl.setForeground(Color.WHITE);
-        lbl.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 12));
-        lbl.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        tooltip.add(lbl);
-        tooltip.setBackground(new Color(200, 55, 55));
-        tooltip.setBounds(txtcontrasenanueva.getX() + txtcontrasenanueva.getWidth() + 10, txtcontrasenanueva.getY() - 5, 280, 65);
-        add(tooltip);
-        tooltip.repaint();
-        tooltip.setVisible(true);
-        repaint();
-    }
-
-    private void ocultarTooltip() {
-        if (tooltip != null) {
-            remove(tooltip);
-            tooltip = null;
-            repaint();
-        }
-    }
+    //
 }

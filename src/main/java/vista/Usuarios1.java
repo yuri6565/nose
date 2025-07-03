@@ -105,7 +105,7 @@ public void cargarTablaUsuarios() {
             }
         };
 
-        model.addColumn("Seleccionar");
+        model.addColumn("Selec");
         model.addColumn("Código");
         model.addColumn("Nombre");
         model.addColumn("Apellido");
@@ -361,7 +361,7 @@ class ButtonPanelEditor extends DefaultCellEditor {
             txtBuscar.setColorIcon(texto);
             txtBuscar.setPhColor(Color.LIGHT_GRAY);
             rSCheckBox1.setForeground(new Color(255, 255, 255));
- rSCheckBox1.setColorCheck(new Color(255, 255, 255));
+ 
   rSCheckBox1.setColorUnCheck(new Color(255, 255, 255));
             tablaUsuarios.setBackground(fondo); // Explicitly set table background
             tablaUsuarios.setBackgoundHead(new Color(67, 71, 120));
@@ -380,7 +380,12 @@ class ButtonPanelEditor extends DefaultCellEditor {
             tablaUsuarios.setEffectHover(true);
             tablaUsuarios.setShowGrid(true);
             tablaUsuarios.setGridColor(Color.WHITE);
-
+rSButtonMaterialRippleIcon1.setForegroundIcon(fondo);   //[46,49,82]
+ rSButtonMaterialRippleIcon1.setBackground(new Color(67, 71, 120));
+  rSButtonMaterialRippleIcon1.setForegroundHover(new Color(67, 71, 120));
+   rSButtonMaterialRippleIcon1.setForegroundIconHover(new Color(67, 71, 120));
+     rSButtonMaterialRippleIcon1.setForegroundText(new Color(67, 71, 120));
+         rSButtonMaterialRippleIcon1.setBackground(new Color(67, 71, 120));
             btnNuevo1.setBackground(new Color(67, 71, 120));
             btnNuevo1.setBackgroundHover(new Color(118, 142, 240));
         
@@ -388,14 +393,17 @@ class ButtonPanelEditor extends DefaultCellEditor {
             Color fondo = new Color(241,245,253);
             Color texto = Color.BLACK;
             Color primario = new Color(72, 92, 188);
-
+rSButtonMaterialRippleIcon1.setForegroundIcon(new Color(72, 92, 188));   //[46,49,82]
+ rSButtonMaterialRippleIcon1.setBackground(new Color(247,247,255));
+  rSButtonMaterialRippleIcon1.setForegroundHover(new Color(21, 21, 33));
+   rSButtonMaterialRippleIcon1.setForegroundIconHover(new Color(21, 21, 33));
             jPanel1.setBackground(fondo);
             txtBuscar.setBackground(fondo);
             txtBuscar.setForeground(texto);
             txtBuscar.setColorIcon(texto);
             txtBuscar.setPhColor(Color.GRAY);
                 rSCheckBox1.setForeground(new Color(67, 71, 120));
- rSCheckBox1.setColorCheck(new Color(67, 71, 120));
+ 
   rSCheckBox1.setColorUnCheck(new Color(67, 71, 120));
             tablaUsuarios.setBackground(fondo); // Explicitly set table background
             tablaUsuarios.setBackgoundHead(new Color(46, 49, 82));
@@ -556,7 +564,7 @@ class ButtonPanelEditor extends DefaultCellEditor {
 
         rSCheckBox1.setForeground(new java.awt.Color(102, 102, 255));
         rSCheckBox1.setText("Seleccionar Todo");
-        rSCheckBox1.setColorCheck(new java.awt.Color(255, 51, 102));
+        rSCheckBox1.setColorCheck(new java.awt.Color(0, 204, 51));
         rSCheckBox1.setColorUnCheck(new java.awt.Color(204, 153, 0));
         jPanel1.add(rSCheckBox1, new org.netbeans.lib.awtextra.AbsoluteConstraints(90, 670, 190, 20));
 

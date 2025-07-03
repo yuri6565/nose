@@ -30,7 +30,7 @@ public class Ctrl_Proveedor {
             consulta.setString(5, objeto.getCorreo_electronico());
             consulta.setString(6, objeto.getTelefono());
             consulta.setString(7, objeto.getDireccion());
-            consulta.setString(8, "activo"); // Estado fijo
+            consulta.setString(8, objeto.getEstado() != null ? objeto.getEstado() : "activo"); // Usar el estado del objeto, por defecto "activo"
             consulta.setString(9, objeto.getDepartamento());
             consulta.setString(10, objeto.getMunicipio());
 
@@ -60,7 +60,7 @@ public class Ctrl_Proveedor {
 
     public ProveedorDatos obtenerProveedorPorid(int id_proveedor) {
         ProveedorDatos datosproveedor = null;
-        String sql = "SELECT * FROM proveedor WHERE id_proveedor = ? AND estado = 'activo'";
+        String sql = "SELECT * FROM proveedor WHERE id_proveedor = ?";
 
         try (Connection con = Conexion.getConnection();
              PreparedStatement consulta = con.prepareStatement(sql)) {
@@ -75,7 +75,7 @@ public class Ctrl_Proveedor {
                     datosproveedor.setCorreo_electronico(rs.getString("correo_electronico"));
                     datosproveedor.setTelefono(rs.getString("telefono"));
                     datosproveedor.setDireccion(rs.getString("direccion"));
-                    datosproveedor.setEstado(rs.getString("estado"));
+                    datosproveedor.setEstado(rs.getString("estado")); // Mantener el estado actual
                     datosproveedor.setDepartamento(rs.getString("departamento"));
                     datosproveedor.setMunicipio(rs.getString("municipio"));
                     // Cargar productos
@@ -88,46 +88,34 @@ public class Ctrl_Proveedor {
         return datosproveedor;
     }
 
-    public boolean editar(ProveedorDatos objeto, int id_proveedor) {
-        boolean respuesta = false;
-        String sql = "UPDATE proveedor SET tipo_identificacion = ?, nombre = ?, apellido = ?, correo_electronico = ?, telefono = ?, direccion = ?, estado = ?, departamento = ?, municipio = ? WHERE id_proveedor = ?";
-
+    public boolean editar(ProveedorDatos proveedor, int idProveedor) {
+        String sql = "UPDATE proveedor SET tipo_identificacion = ?, nombre = ?, apellido = ?, telefono = ?, correo_electronico = ?, direccion = ?, estado = ?, departamento = ?, municipio = ? WHERE id_proveedor = ?";
         try (Connection con = Conexion.getConnection();
-             PreparedStatement consulta = con.prepareStatement(sql)) {
-            consulta.setString(1, objeto.getTipoIdentificacion());
-            consulta.setString(2, objeto.getNombre());
-            consulta.setString(3, objeto.getApellido());
-            consulta.setString(4, objeto.getCorreo_electronico());
-            consulta.setString(5, objeto.getTelefono());
-            consulta.setString(6, objeto.getDireccion());
-            consulta.setString(7, objeto.getEstado() != null ? objeto.getEstado() : "activo"); // Asegura estado
-            consulta.setString(8, objeto.getDepartamento());
-            consulta.setString(9, objeto.getMunicipio());
-            consulta.setInt(10, id_proveedor);
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setString(1, proveedor.getTipoIdentificacion());
+            stmt.setString(2, proveedor.getNombre());
+            stmt.setString(3, proveedor.getApellido() != null ? proveedor.getApellido() : "");
+            stmt.setString(4, proveedor.getTelefono());
+            stmt.setString(5, proveedor.getCorreo_electronico());
+            stmt.setString(6, proveedor.getDireccion());
+            stmt.setString(7, proveedor.getEstado());
+            stmt.setString(8, proveedor.getDepartamento());
+            stmt.setString(9, proveedor.getMunicipio());
+            stmt.setInt(10, idProveedor);
 
-            if (consulta.executeUpdate() > 0) {
-                // Actualizar relaciones con productos
-                eliminarSuministra(id_proveedor); // Eliminar relaciones antiguas
-                if (objeto.getProductos() != null && !objeto.getProductos().isEmpty()) {
-                    for (String producto : objeto.getProductos()) {
-                        int idInventario = obtenerIdInventarioPorNombre(producto);
-                        if (idInventario != -1) {
-                            if (!guardarSuministra(id_proveedor, idInventario)) {
-                                JOptionPane.showMessageDialog(null, "Error al asociar producto: " + producto);
-                                return false;
-                            }
-                        } else {
-                            JOptionPane.showMessageDialog(null, "Producto no encontrado en inventario: " + producto);
-                            return false;
-                        }
-                    }
-                }
-                respuesta = true;
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(null, "Proveedor actualizado exitosamente.");
+                return true;
+            } else {
+                JOptionPane.showMessageDialog(null, "No se encontró el proveedor o no se pudo actualizar.");
+                return false;
             }
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Error al editar proveedor: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-        return respuesta;
     }
 
     private void eliminarSuministra(int id_proveedor) {
@@ -153,7 +141,7 @@ public class Ctrl_Proveedor {
                 respuesta = true;
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error al desactivar proveedor (en vez de eliminar): " + e.getMessage());
+            JOptionPane.showMessageDialog(null, "Error al desactivar proveedor: " + e.getMessage());
             e.printStackTrace();
         }
         return respuesta;
@@ -241,8 +229,7 @@ public class Ctrl_Proveedor {
         String sql = "SELECT p.*, i.nombre AS nombre_producto " +
                      "FROM proveedor p " +
                      "LEFT JOIN suministra s ON p.id_proveedor = s.proveedor_id_proveedor " +
-                     "LEFT JOIN inventario i ON s.inventario_id_inventario = i.id_inventario " +
-                     "WHERE p.estado = 'activo'";
+                     "LEFT JOIN inventario i ON s.inventario_id_inventario = i.id_inventario";
 
         try (Connection con = Conexion.getConnection();
              PreparedStatement stmt = con.prepareStatement(sql);
@@ -297,5 +284,25 @@ public class Ctrl_Proveedor {
             JOptionPane.showMessageDialog(null, "Error al obtener productos del proveedor: " + e.getMessage());
         }
         return productos;
+    }
+    
+    public boolean activar(int id_proveedor) {
+        String sql = "UPDATE proveedor SET estado = 'activo' WHERE id_proveedor = ?";
+        try (Connection con = Conexion.getConnection();
+             PreparedStatement stmt = con.prepareStatement(sql)) {
+            stmt.setInt(1, id_proveedor);
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(null, "Proveedor activado exitosamente.");
+                return true;
+            } else {
+                JOptionPane.showMessageDialog(null, "No se encontró el proveedor o no se pudo activar.");
+                return false;
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error al activar proveedor: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

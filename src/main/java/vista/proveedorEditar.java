@@ -47,22 +47,29 @@ public class proveedorEditar extends javax.swing.JDialog {
     public boolean guardado = false;
     private CheckedComboBox<CheckableItem> cmbProducto;
     private Ctrl_Proveedor ctrlProveedor;
-    private int proveedorId; // To store the ID of the provider being edited
-    private List<Departamento> departamentos; // Add this to store department data
+    private int proveedorId;
+    private List<Departamento> departamentos;
 
     public proveedorEditar(Frame parent, boolean modal, int idProveedor) {
         super(parent, modal);
-        departamentos = Departamento.getTodosDepartamentos(); // Initialize departments
+        departamentos = Departamento.getTodosDepartamentos();
         initComponents();
         setTitle(idProveedor == -1 ? "Crear Proveedor" : "Editar Proveedor");
+        tipoidentificacion5.setVisible(false);
+        tipoidentificacion6.setVisible(false);
+        tipoidentificacion9.setVisible(false);
+        tipoidentificacion7.setVisible(false);
+        tipoidentificacion8.setVisible(false);
+        tipoidentificacion1.setVisible(false);
+        tipoidentificacion4.setVisible(false);
+        dirección3.setVisible(false);
+        dirección2.setVisible(false);
 
-        // Initialize cmbProducto first
         ctrlProveedor = new Ctrl_Proveedor();
         cmbProducto = new CheckedComboBox<>(makeProductModel());
         cmbProducto.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        jPanel3.add(cmbProducto,new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 470, 200, 30));
+        jPanel3.add(cmbProducto, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 470, 200, 30));
 
-        // Set up navigation ActionListeners
         txtNombre.addActionListener(e -> txtNombre12.requestFocus());
         txtNombre12.addActionListener(e -> txtNombre13.requestFocus());
         txtNombre13.addActionListener(e -> txttelefono.requestFocus());
@@ -76,7 +83,6 @@ public class proveedorEditar extends javax.swing.JDialog {
         gh.addActionListener(e -> cmbProducto.requestFocus());
         cmbProducto.addActionListener(e -> btnguardarr.requestFocus());
 
-        // Load departments
         cargarDepartamentos();
 
         if (idProveedor != -1) {
@@ -85,10 +91,6 @@ public class proveedorEditar extends javax.swing.JDialog {
         } else {
             txtNombre.setText("");
         }
-    }
-
-    public boolean isGuardado() {
-        return guardado;
     }
 
     private DefaultComboBoxModel<CheckableItem> makeProductModel() {
@@ -107,40 +109,35 @@ public class proveedorEditar extends javax.swing.JDialog {
     private void cargarDepartamentos() {
         DefaultComboBoxModel<String> modelo = new DefaultComboBoxModel<>();
         modelo.addElement("Seleccionar");
-        
-        // Sort departments alphabetically
         departamentos.sort((d1, d2) -> d1.getNombre().compareTo(d2.getNombre()));
-        
         for (Departamento depto : departamentos) {
             modelo.addElement(depto.getNombre());
         }
-        
         gh1.setModel(modelo);
     }
 
     private void actualizarMunicipios() {
         String departamentoSeleccionado = (String) gh1.getSelectedItem();
-        
+        System.out.println("Departamento seleccionado: " + departamentoSeleccionado);
         if (departamentoSeleccionado == null || "Seleccionar".equals(departamentoSeleccionado)) {
-            DefaultComboBoxModel<String> modeloVacio = new DefaultComboBoxModel<>();
-            modeloVacio.addElement("Seleccionar");
+            DefaultComboBoxModel<CheckableItem> modeloVacio = new DefaultComboBoxModel<>();
+            modeloVacio.addElement(new CheckableItem("Seleccionar", false));
             gh.setModel(modeloVacio);
             return;
         }
-        
+
         for (Departamento depto : departamentos) {
             if (depto.getNombre().equals(departamentoSeleccionado)) {
-                DefaultComboBoxModel<String> modeloMunicipios = new DefaultComboBoxModel<>();
-                modeloMunicipios.addElement("Seleccionar");
-                
-                // Sort municipalities alphabetically
+                DefaultComboBoxModel<CheckableItem> modeloMunicipios = new DefaultComboBoxModel<>();
+                modeloMunicipios.addElement(new CheckableItem("Seleccionar", false));
                 List<String> municipiosOrdenados = depto.getMunicipios();
-                municipiosOrdenados.sort(String::compareTo);
-                
-                for (String municipio : municipiosOrdenados) {
-                    modeloMunicipios.addElement(municipio);
+                System.out.println("Municipios para " + departamentoSeleccionado + ": " + municipiosOrdenados);
+                if (municipiosOrdenados != null) {
+                    municipiosOrdenados.sort(String::compareTo);
+                    for (String municipio : municipiosOrdenados) {
+                        modeloMunicipios.addElement(new CheckableItem(municipio, false));
+                    }
                 }
-                
                 gh.setModel(modeloMunicipios);
                 break;
             }
@@ -157,11 +154,22 @@ public class proveedorEditar extends javax.swing.JDialog {
             txttelefono.setText(proveedor.getTelefono() != null ? proveedor.getTelefono() : "");
             txtcorreo.setText(proveedor.getCorreo_electronico() != null ? proveedor.getCorreo_electronico() : "");
             txtdireccion.setText(proveedor.getDireccion() != null ? proveedor.getDireccion() : "");
-            gh1.setSelectedItem(proveedor.getDepartamento() != null ? proveedor.getDepartamento() : "Seleccionar");
-            actualizarMunicipios(); // Update municipalities based on selected department
-            gh.setSelectedItem(proveedor.getMunicipio() != null ? proveedor.getMunicipio() : "Seleccionar");
 
-            // Cargar productos seleccionados
+            String departamento = proveedor.getDepartamento();
+            if (departamento != null && !departamento.isEmpty()) {
+                gh1.setSelectedItem(departamento);
+                actualizarMunicipios();
+            } else {
+                gh1.setSelectedIndex(0);
+            }
+
+            String municipio = proveedor.getMunicipio();
+            if (municipio != null && !municipio.isEmpty()) {
+                gh.setSelectedItem(municipio);
+            } else {
+                gh.setSelectedIndex(0);
+            }
+
             List<String> productosProveedor = proveedor.getProductos();
             if (productosProveedor != null) {
                 for (int i = 0; i < cmbProducto.getModel().getSize(); i++) {
@@ -173,6 +181,9 @@ public class proveedorEditar extends javax.swing.JDialog {
         } else {
             JOptionPane.showMessageDialog(this, "No se encontró el proveedor con ID: " + idProveedor, "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+        public boolean isGuardado() {
+        return guardado;
     }
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -214,7 +225,6 @@ public class proveedorEditar extends javax.swing.JDialog {
         jLabel28 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
-        dirección1 = new javax.swing.JLabel();
         dirección3 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         identificaciontxt = new RSMaterialComponent.RSComboBoxMaterial();
@@ -225,9 +235,6 @@ public class proveedorEditar extends javax.swing.JDialog {
         jLabel8 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         gh2 = new RSMaterialComponent.RSComboBoxMaterial();
-        jLabel17 = new javax.swing.JLabel();
-        jLabel18 = new javax.swing.JLabel();
-        gh3 = new RSMaterialComponent.RSComboBoxMaterial();
         dirección2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -243,7 +250,7 @@ public class proveedorEditar extends javax.swing.JDialog {
 
         jLabel2.setFont(new java.awt.Font("Century751 BT", 1, 24)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel2.setText("Crear Proveedor");
+        jLabel2.setText("Editar Proveedor");
         jPanel4.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, -1, -1));
 
         btnGuardar2.setBackground(new java.awt.Color(46, 49, 82));
@@ -435,10 +442,6 @@ public class proveedorEditar extends javax.swing.JDialog {
         jLabel9.setText("*");
         jPanel3.add(jLabel9, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 450, 20, -1));
 
-        dirección1.setForeground(new java.awt.Color(255, 51, 51));
-        dirección1.setText("jLabel2");
-        jPanel3.add(dirección1, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 580, 200, -1));
-
         dirección3.setForeground(new java.awt.Color(255, 51, 51));
         dirección3.setText("jLabel2");
         jPanel3.add(dirección3, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 420, 200, -1));
@@ -505,30 +508,11 @@ public class proveedorEditar extends javax.swing.JDialog {
         });
         jPanel3.add(gh2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 470, 200, 30));
 
-        jLabel17.setFont(new java.awt.Font("Segoe UI", 0, 15)); // NOI18N
-        jLabel17.setText("Estado:");
-        jPanel3.add(jLabel17, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 530, -1, -1));
-
-        jLabel18.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
-        jLabel18.setForeground(new java.awt.Color(255, 51, 51));
-        jLabel18.setText("*");
-        jPanel3.add(jLabel18, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 530, 20, -1));
-
-        gh3.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Seleccionar", " ", " " }));
-        gh3.setColorMaterial(new java.awt.Color(29, 30, 51));
-        gh3.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
-        gh3.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                gh3ActionPerformed(evt);
-            }
-        });
-        jPanel3.add(gh3, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 550, 200, 30));
-
         dirección2.setForeground(new java.awt.Color(255, 51, 51));
         dirección2.setText("jLabel2");
         jPanel3.add(dirección2, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 500, 200, -1));
 
-        getContentPane().add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 510, 680));
+        getContentPane().add(jPanel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 500, 680));
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -552,84 +536,77 @@ public class proveedorEditar extends javax.swing.JDialog {
     private void btnguardarrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnguardarrActionPerformed
  boolean isValid = true;
 
-        // Limpiar mensajes de error previos
+        // Ocultar y limpiar mensajes de error previos
         tipoidentificacion5.setText("");
+        tipoidentificacion5.setVisible(false);
         tipoidentificacion6.setText("");
+        tipoidentificacion6.setVisible(false);
         tipoidentificacion9.setText("");
+        tipoidentificacion9.setVisible(false);
         tipoidentificacion7.setText("");
+        tipoidentificacion7.setVisible(false);
         tipoidentificacion8.setText("");
+        tipoidentificacion8.setVisible(false);
         tipoidentificacion1.setText("");
+        tipoidentificacion1.setVisible(false);
         tipoidentificacion4.setText("");
+        tipoidentificacion4.setVisible(false);
         dirección3.setText("");
-        dirección1.setText("");
+        dirección3.setVisible(false);
         dirección2.setText("");
+        dirección2.setVisible(false);
 
         // Validar campos obligatorios
         if (identificaciontxt.getSelectedIndex() == 0) {
             tipoidentificacion6.setText("Este campo es obligatorio");
+            tipoidentificacion6.setVisible(true);
             isValid = false;
-        }
-        if (txtNombre.getText().trim().isEmpty()) {
-            tipoidentificacion5.setText("Este campo es obligatorio");
-            isValid = false;
-        } else {
-            try {
-                Integer.parseInt(txtNombre.getText().trim());
-            } catch (NumberFormatException e) {
-                tipoidentificacion5.setText("El ID debe ser un número válido");
-                isValid = false;
-            }
         }
         if (txtNombre12.getText().trim().isEmpty()) {
-            tipoidentificacion9.setText("Este campo es obligatorio");
+            tipoidentificacion5.setText("Este campo es obligatorio");
+            tipoidentificacion5.setVisible(true);
             isValid = false;
         }
         if (txttelefono.getText().trim().isEmpty()) {
-            tipoidentificacion1.setText("Este campo es obligatorio");
+            tipoidentificacion9.setText("Este campo es obligatorio");
+            tipoidentificacion9.setVisible(true);
             isValid = false;
         }
         if (txtcorreo.getText().trim().isEmpty()) {
             tipoidentificacion7.setText("Este campo es obligatorio");
+            tipoidentificacion7.setVisible(true);
             isValid = false;
         }
         if (txtdireccion.getText().trim().isEmpty()) {
             tipoidentificacion8.setText("Este campo es obligatorio");
+            tipoidentificacion8.setVisible(true);
             isValid = false;
         }
-        if (gh1.getSelectedIndex() == 0) {
+        if ("Seleccionar".equals(gh1.getSelectedItem())) {
             dirección3.setText("Este campo es obligatorio");
+            dirección3.setVisible(true);
             isValid = false;
         }
-        if (gh.getSelectedIndex() == 0) {
-            dirección1.setText("Este campo es obligatorio");
-            isValid = false;
-        }
-        if (gh2.getSelectedIndex() == 0) {
+        if ("Seleccionar".equals(gh.getSelectedItem())) {
             dirección2.setText("Este campo es obligatorio");
-            isValid = false;
-        }
-        if (IntStream.range(0, cmbProducto.getModel().getSize())
-                .mapToObj(i -> cmbProducto.getModel().getElementAt(i))
-                .noneMatch(CheckableItem::isSelected)) {
-            tipoidentificacion4.setText("Seleccione al menos un producto");
+            dirección2.setVisible(true);
             isValid = false;
         }
 
         if (!isValid) {
-            JOptionPane.showMessageDialog(this, "Por favor, complete todos los campos obligatorios.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Por favor, complete todos los campos obligatorios correctamente.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        // Si todos los campos son válidos
         ProveedorDatos proveedor = new ProveedorDatos();
         int idProveedor = proveedorId == -1 ? Integer.parseInt(txtNombre.getText().trim()) : proveedorId;
         proveedor.setId_proveedor(idProveedor);
         proveedor.setTipoIdentificacion(identificaciontxt.getSelectedItem().toString());
         proveedor.setNombre(txtNombre12.getText().trim());
-        proveedor.setApellido(txtNombre13.getText().trim());
         proveedor.setTelefono(txttelefono.getText().trim());
         proveedor.setCorreo_electronico(txtcorreo.getText().trim());
         proveedor.setDireccion(txtdireccion.getText().trim());
-        proveedor.setEstado(gh2.getSelectedItem().toString());
         proveedor.setDepartamento(gh1.getSelectedItem().toString());
         proveedor.setMunicipio(gh.getSelectedItem().toString());
         List<String> productos = IntStream.range(0, cmbProducto.getModel().getSize())
@@ -642,10 +619,14 @@ public class proveedorEditar extends javax.swing.JDialog {
         boolean exito;
         if (proveedorId == -1) {
             exito = ctrlProveedor.guardarProveedor(proveedor);
-            if (exito) JOptionPane.showMessageDialog(this, "Proveedor guardado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            if (exito) {
+                JOptionPane.showMessageDialog(this, "Proveedor guardado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            }
         } else {
             exito = ctrlProveedor.editar(proveedor, idProveedor);
-            if (exito) JOptionPane.showMessageDialog(this, "Proveedor actualizado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            if (exito) {
+                JOptionPane.showMessageDialog(this, "Proveedor actualizado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            }
         }
 
         if (exito) {
@@ -654,7 +635,7 @@ public class proveedorEditar extends javax.swing.JDialog {
         } else {
             JOptionPane.showMessageDialog(this, "Error al guardar/actualizar el proveedor.", "Error", JOptionPane.ERROR_MESSAGE);
         }
-
+    
     }//GEN-LAST:event_btnguardarrActionPerformed
 
     private void btnCancelar2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCancelar2ActionPerformed
@@ -664,10 +645,6 @@ public class proveedorEditar extends javax.swing.JDialog {
     private void gh2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gh2ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_gh2ActionPerformed
-
-    private void gh3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gh3ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_gh3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -718,13 +695,11 @@ public class proveedorEditar extends javax.swing.JDialog {
     private rojeru_san.RSButtonRiple btnCancelar2;
     private rojeru_san.RSButtonRiple btnGuardar2;
     private rojeru_san.RSButtonRiple btnguardarr;
-    private javax.swing.JLabel dirección1;
     private javax.swing.JLabel dirección2;
     private javax.swing.JLabel dirección3;
     private RSMaterialComponent.RSComboBoxMaterial gh;
     private RSMaterialComponent.RSComboBoxMaterial gh1;
     private RSMaterialComponent.RSComboBoxMaterial gh2;
-    private RSMaterialComponent.RSComboBoxMaterial gh3;
     private RSMaterialComponent.RSComboBoxMaterial identificaciontxt;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -733,8 +708,6 @@ public class proveedorEditar extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
-    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
@@ -769,152 +742,152 @@ public class proveedorEditar extends javax.swing.JDialog {
     // End of variables declaration//GEN-END:variables
 // Clases internas para el CheckedComboBox
 class CheckableItem {
-        private final String text;
-        private boolean selected;
+    private final String text;
+    private boolean selected;
 
-        protected CheckableItem(String text, boolean selected) {
-            this.text = text;
-            this.selected = selected;
-        }
-
-        public boolean isSelected() {
-            return selected;
-        }
-
-        public void setSelected(boolean selected) {
-            this.selected = selected;
-        }
-
-        @Override
-        public String toString() {
-            return text;
-        }
+    protected CheckableItem(String text, boolean selected) {
+        this.text = text;
+        this.selected = selected;
     }
 
-    class CheckedComboBox<E extends CheckableItem> extends JComboBox<E> {
-        protected boolean keepOpen;
-        private final JPanel panel = new JPanel(new BorderLayout());
+    public boolean isSelected() {
+        return selected;
+    }
 
-        protected CheckedComboBox(ComboBoxModel<E> model) {
-            super(model);
-            setBackground(new Color(255, 255, 255));
-            setForeground(Color.DARK_GRAY);
-        }
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+    }
 
-        @Override
-        public Dimension getPreferredSize() {
-            return new Dimension(200, 40);
-        }
+    @Override
+    public String toString() {
+        return text;
+    }
+}
 
-        @Override
-        public void updateUI() {
-            setRenderer(null);
-            super.updateUI();
+class CheckedComboBox<E extends CheckableItem> extends JComboBox<E> {
+    protected boolean keepOpen;
+    private final JPanel panel = new JPanel(new BorderLayout());
 
-            Accessible a = getAccessibleContext().getAccessibleChild(0);
-            if (a instanceof ComboPopup) {
-                ((ComboPopup) a).getList().addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mousePressed(MouseEvent e) {
-                        JList<?> list = (JList<?>) e.getComponent();
-                        if (SwingUtilities.isLeftMouseButton(e)) {
-                            keepOpen = true;
-                            updateItem(list.locationToIndex(e.getPoint()));
-                        }
-                    }
-                });
-            }
+    protected CheckedComboBox(ComboBoxModel<E> model) {
+        super(model);
+        setBackground(new Color(255, 255, 255));
+        setForeground(Color.DARK_GRAY);
+    }
 
-            DefaultListCellRenderer renderer = new DefaultListCellRenderer() {
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(200, 40);
+    }
+
+    @Override
+    public void updateUI() {
+        setRenderer(null);
+        super.updateUI();
+
+        Accessible a = getAccessibleContext().getAccessibleChild(0);
+        if (a instanceof ComboPopup) {
+            ((ComboPopup) a).getList().addMouseListener(new MouseAdapter() {
                 @Override
-                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if (index >= 0) {
-                        c.setBackground(isSelected ? new Color(0, 120, 215, 50) : new Color(255, 255, 255));
-                        c.setForeground(Color.DARK_GRAY);
-                    } else {
-                        c.setBackground(new Color(0, 0, 0, 0));
+                public void mousePressed(MouseEvent e) {
+                    JList<?> list = (JList<?>) e.getComponent();
+                    if (SwingUtilities.isLeftMouseButton(e)) {
+                        keepOpen = true;
+                        updateItem(list.locationToIndex(e.getPoint()));
                     }
-                    return c;
                 }
-            };
-            JCheckBox check = new JCheckBox();
-            check.setOpaque(false);
-            check.setForeground(new Color(0, 120, 215));
-            setRenderer((list, value, index, isSelected, cellHasFocus) -> {
-                panel.removeAll();
-                Component c = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                if (index < 0) {
-                    String txt = getCheckedItemString(list.getModel());
-                    JLabel l = (JLabel) c;
-                    l.setText(txt.isEmpty() ? " " : txt);
-                    l.setForeground(Color.DARK_GRAY);
-                    l.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-                    panel.setOpaque(false);
-                    panel.setBackground(new Color(0, 0, 0, 0));
+            });
+        }
+
+        DefaultListCellRenderer renderer = new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (index >= 0) {
+                    c.setBackground(isSelected ? new Color(0, 120, 215, 50) : new Color(255, 255, 255));
+                    c.setForeground(Color.DARK_GRAY);
                 } else {
-                    check.setSelected(value.isSelected());
-                    panel.add(check, BorderLayout.WEST);
-                    panel.setBackground(isSelected ? new Color(0, 120, 215, 50) : new Color(255, 255, 255));
+                    c.setBackground(new Color(0, 0, 0, 0));
                 }
-                panel.add(c, BorderLayout.CENTER);
-                return panel;
-            });
-            initActionMap();
-        }
-
-        protected void initActionMap() {
-            KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0);
-            getInputMap(JComponent.WHEN_FOCUSED).put(ks, "checkbox-select");
-            getActionMap().put("checkbox-select", new AbstractAction() {
-                public void actionPerformed(ActionEvent e) {
-                    Accessible a = getAccessibleContext().getAccessibleChild(0);
-                    if (a instanceof ComboPopup) {
-                        updateItem(((ComboPopup) a).getList().getSelectedIndex());
-                    }
-                }
-            });
-        }
-
-        protected void updateItem(int index) {
-            if (isPopupVisible() && index >= 0) {
-                E item = getItemAt(index);
-                item.setSelected(!item.isSelected());
-                setSelectedIndex(-1);
-                setSelectedItem(item);
+                return c;
             }
-        }
-
-        @Override
-        public void setPopupVisible(boolean v) {
-            if (keepOpen) {
-                keepOpen = false;
+        };
+        JCheckBox check = new JCheckBox();
+        check.setOpaque(false);
+        check.setForeground(new Color(0, 120, 215));
+        setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            panel.removeAll();
+            Component c = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (index < 0) {
+                String txt = getCheckedItemString(list.getModel());
+                JLabel l = (JLabel) c;
+                l.setText(txt.isEmpty() ? " " : txt);
+                l.setForeground(Color.DARK_GRAY);
+                l.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                panel.setOpaque(false);
+                panel.setBackground(new Color(0, 0, 0, 0));
             } else {
-                super.setPopupVisible(v);
+                check.setSelected(value.isSelected());
+                panel.add(check, BorderLayout.WEST);
+                panel.setBackground(isSelected ? new Color(0, 120, 215, 50) : new Color(255, 255, 255));
             }
-        }
+            panel.add(c, BorderLayout.CENTER);
+            return panel;
+        });
+        initActionMap();
+    }
 
-        protected static <E extends CheckableItem> String getCheckedItemString(ListModel<E> model) {
-            return IntStream.range(0, model.getSize())
-                    .mapToObj(model::getElementAt)
-                    .filter(CheckableItem::isSelected)
-                    .map(Objects::toString)
-                    .sorted()
-                    .collect(Collectors.joining(", "));
+    protected void initActionMap() {
+        KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0);
+        getInputMap(JComponent.WHEN_FOCUSED).put(ks, "checkbox-select");
+        getActionMap().put("checkbox-select", new AbstractAction() {
+            public void actionPerformed(ActionEvent e) {
+                Accessible a = getAccessibleContext().getAccessibleChild(0);
+                if (a instanceof ComboPopup) {
+                    updateItem(((ComboPopup) a).getList().getSelectedIndex());
+                }
+            }
+        });
+    }
+
+    protected void updateItem(int index) {
+        if (isPopupVisible() && index >= 0) {
+            E item = getItemAt(index);
+            item.setSelected(!item.isSelected());
+            setSelectedIndex(-1);
+            setSelectedItem(item);
         }
     }
 
-    class ModernPanel extends JPanel {
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            GradientPaint gp = new GradientPaint(0, 0, getBackground(), getWidth(), getHeight(), getBackground().brighter(), true);
-            g2d.setPaint(gp);
-            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-            g2d.setColor(new Color(0, 0, 0, 20));
-            g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+    @Override
+    public void setPopupVisible(boolean v) {
+        if (keepOpen) {
+            keepOpen = false;
+        } else {
+            super.setPopupVisible(v);
         }
     }
+
+    protected static <E extends CheckableItem> String getCheckedItemString(ListModel<E> model) {
+        return IntStream.range(0, model.getSize())
+                .mapToObj(model::getElementAt)
+                .filter(CheckableItem::isSelected)
+                .map(Objects::toString)
+                .sorted()
+                .collect(Collectors.joining(", "));
+    }
+}
+
+class ModernPanel extends JPanel {
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        GradientPaint gp = new GradientPaint(0, 0, getBackground(), getWidth(), getHeight(), getBackground().brighter(), true);
+        g2d.setPaint(gp);
+        g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+        g2d.setColor(new Color(0, 0, 0, 20));
+        g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+    }
+}
 }

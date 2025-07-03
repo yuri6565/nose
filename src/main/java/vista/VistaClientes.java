@@ -7,6 +7,7 @@ package vista;
 import controlador.Ctrl_Cliente;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseAdapter;
@@ -53,12 +54,14 @@ public class VistaClientes extends javax.swing.JPanel {
     private int id_cliente;
     private Ctrl_Cliente controlador;
 
+
     private int columnaFiltro = -1;
 
     private int currentPage = 0;
     private final int CLIENTES_POR_PAGINA = 19;
     private List<Cliente> todasLasClientes = new ArrayList<>();
-    private boolean[] seleccionados; // To track selected checkboxes
+    private boolean[] seleccionados;
+
 
     private TableRowSorter<DefaultTableModel> sorter;
 
@@ -189,32 +192,360 @@ public class VistaClientes extends javax.swing.JPanel {
         for (int i = 0; i < model.getRowCount(); i++) {
             model.setValueAt(seleccionado, i, 0);
             seleccionados[inicio + i] = seleccionado;
+
+    public VistaClientes(JFrame jFrame, boolean par) {
+        controlador = new Ctrl_Cliente();
+        initComponents();
+        jPanel1.setPreferredSize(new java.awt.Dimension(1340, 750));
+        jScrollPane3.setPreferredSize(new java.awt.Dimension(1200, 550));
+        rSCheckBox1.addActionListener(e -> seleccionarTodo());
+        cargartablaclientes();
+        aplicarTema();
+        rSButtonMaterialRippleIcon1.setVisible(false); // Ocultar botón por defecto
+        TemaManager.getInstance().addThemeChangeListener(this::aplicarTema);
+
+        // Agregar DocumentListener para búsqueda dinámica
+        txtBuscar.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                buscarDinamico();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                buscarDinamico();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                buscarDinamico();
+            }
+        });
+    }
+
+    public void cargartablaclientes() {
+        tablaclientes.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        DefaultTableModel model = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int fila, int columna) {
+                return columna == 0 || columna == 9; // "Selec" y "Acciones"
+            }
+
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                if (columnIndex == 0) return Boolean.class;
+                return String.class;
+            }
+        };
+
+        model.addColumn("Selec");
+        model.addColumn("Código");
+        model.addColumn("Doc. Tipo");
+        model.addColumn("Nombre");
+        model.addColumn("Apellido");
+        model.addColumn("Teléfono");
+        model.addColumn("Departamento/Municipio");
+        model.addColumn("Dirección");
+        model.addColumn("Estado");
+        model.addColumn("Acciones");
+
+        List<Cliente> clientes = controlador.obtenerClientes();
+        todasLasClientes = new ArrayList<>(clientes);
+        System.out.println("Número de clientes cargados: " + todasLasClientes.size());
+        seleccionados = new boolean[todasLasClientes.size()];
+
+        for (Cliente cliente : todasLasClientes) {
+            String ubicacion = (cliente.getDepartamento() != null ? cliente.getDepartamento() : "Sin departamento") + "/" +
+                    (cliente.getMunicipio() != null ? cliente.getMunicipio() : "Sin municipio");
+            model.addRow(new Object[]{
+                false,
+                String.valueOf(cliente.getId_cliente()),
+                cliente.getIdentificacion() != null ? cliente.getIdentificacion() : "Sin identificación",
+                cliente.getNombre() != null ? cliente.getNombre() : "Sin nombre",
+                cliente.getApellido() != null ? cliente.getApellido() : "Sin apellido",
+                cliente.getTelefono() != null ? cliente.getTelefono() : "Sin teléfono",
+                ubicacion,
+                cliente.getDireccion() != null ? cliente.getDireccion() : "Sin dirección",
+                cliente.isActivo() ? "Activo" : "Inactivo",
+                ""
+            });
+        }
+
+        tablaclientes.setModel(model);
+        mostrarPagina(currentPage);
+
+        // Configurar renderers y editores
+        tablaclientes.getColumnModel().getColumn(0).setCellRenderer(new CustomCheckboxRenderer());
+        tablaclientes.getColumnModel().getColumn(0).setCellEditor(new CustomCheckboxEditor());
+        tablaclientes.getColumnModel().getColumn(8).setCellRenderer(new StateCellRenderer());
+        tablaclientes.getColumnModel().getColumn(9).setCellRenderer(new ButtonPanelRenderer());
+        tablaclientes.getColumnModel().getColumn(9).setCellEditor(new ButtonPanelEditor(new JCheckBox()));
+
+        // Ajustar anchos
+        tablaclientes.getColumnModel().getColumn(0).setPreferredWidth(50);
+        tablaclientes.getColumnModel().getColumn(1).setPreferredWidth(70);
+        tablaclientes.getColumnModel().getColumn(2).setPreferredWidth(70);
+        tablaclientes.getColumnModel().getColumn(3).setPreferredWidth(100);
+        tablaclientes.getColumnModel().getColumn(4).setPreferredWidth(100);
+        tablaclientes.getColumnModel().getColumn(5).setPreferredWidth(80);
+        tablaclientes.getColumnModel().getColumn(6).setPreferredWidth(190);
+        tablaclientes.getColumnModel().getColumn(7).setPreferredWidth(100);
+        tablaclientes.getColumnModel().getColumn(8).setPreferredWidth(80);
+        tablaclientes.getColumnModel().getColumn(9).setPreferredWidth(80);
+        tablaclientes.setRowHeight(24);
+
+        // Listener para detectar cambios en la selección
+        tablaclientes.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                actualizarEstadoBotonAccion();
+            }
+        });
+        tablaclientes.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int fila_point = tablaclientes.rowAtPoint(e.getPoint());
+                if (fila_point > -1) {
+                    try {
+                        id_cliente = Integer.parseInt(tablaclientes.getValueAt(fila_point, 1).toString());
+                    } catch (NumberFormatException ex) {
+                        System.out.println("Error al parsear id_cliente: " + ex.getMessage());
+                    }
+                }
+                actualizarEstadoBotonAccion();
+            }
+        });
+    }
+
+    private void actualizarEstadoBotonAccion() {
+        DefaultTableModel model = (DefaultTableModel) tablaclientes.getModel();
+        List<Integer> seleccionadosIds = new ArrayList<>();
+        List<String> estados = new ArrayList<>();
+
+        for (int i = 0; i < model.getRowCount(); i++) {
+            if (Boolean.TRUE.equals(model.getValueAt(i, 0))) {
+                int id = Integer.parseInt(model.getValueAt(i, 1).toString());
+                String estado = model.getValueAt(i, 8).toString().toLowerCase();
+                seleccionadosIds.add(id);
+                estados.add(estado);
+            }
+        }
+
+        if (seleccionadosIds.isEmpty()) {
+            rSButtonMaterialRippleIcon1.setVisible(false);
+        } else {
+            boolean todosInactivos = estados.stream().allMatch("inactivo"::equals);
+            boolean todosActivos = estados.stream().allMatch("activo"::equals);
+
+            if (todosInactivos) {
+                rSButtonMaterialRippleIcon1.setVisible(true);
+                rSButtonMaterialRippleIcon1.setToolTipText("Activar clientes seleccionados");
+                rSButtonMaterialRippleIcon1.setIcons(ValoresEnum.ICONS.CHECK_CIRCLE);
+                rSButtonMaterialRippleIcon1.setForeground(new Color(0, 102, 204));
+            } else if (todosActivos) {
+                rSButtonMaterialRippleIcon1.setVisible(true);
+                rSButtonMaterialRippleIcon1.setToolTipText("Desactivar clientes seleccionados");
+                rSButtonMaterialRippleIcon1.setIcons(ValoresEnum.ICONS.CANCEL);
+                rSButtonMaterialRippleIcon1.setForeground(Color.GRAY);
+            } else {
+                rSButtonMaterialRippleIcon1.setVisible(false);
+            }
         }
     }
 
-    // In ButtonPanelRenderer
+    private void mostrarPagina(int pagina) {
+        DefaultTableModel model = (DefaultTableModel) tablaclientes.getModel();
+        model.setRowCount(0);
+
+        int inicio = pagina * CLIENTES_POR_PAGINA;
+        int fin = Math.min(inicio + CLIENTES_POR_PAGINA, todasLasClientes.size());
+
+        if (inicio >= todasLasClientes.size()) {
+            currentPage = 0;
+            inicio = 0;
+            fin = Math.min(CLIENTES_POR_PAGINA, todasLasClientes.size());
+        }
+
+        for (int i = inicio; i < fin; i++) {
+            Cliente cliente = todasLasClientes.get(i);
+            String ubicacion = (cliente.getDepartamento() != null ? cliente.getDepartamento() : "") + "/" +
+                    (cliente.getMunicipio() != null ? cliente.getMunicipio() : "");
+            model.addRow(new Object[]{
+                seleccionados[i],
+                String.valueOf(cliente.getId_cliente()),
+                cliente.getIdentificacion() != null ? cliente.getIdentificacion() : "",
+                cliente.getNombre() != null ? cliente.getNombre() : "",
+                cliente.getApellido() != null ? cliente.getApellido() : "",
+                cliente.getTelefono() != null ? cliente.getTelefono() : "",
+                ubicacion,
+                cliente.getDireccion() != null ? cliente.getDireccion() : "",
+                cliente.isActivo() ? "Activo" : "Inactivo",
+                ""
+            });
+        }
+
+        int totalPaginas = (int) Math.ceil((double) todasLasClientes.size() / CLIENTES_POR_PAGINA);
+        paginacion.setText("Página " + (currentPage + 1) + " de " + totalPaginas);
+        Añadir5.setEnabled(currentPage > 0);
+        Añadir4.setEnabled(currentPage < totalPaginas - 1);
+    }
+
+    private void seleccionarTodo() {
+        DefaultTableModel model = (DefaultTableModel) tablaclientes.getModel();
+        boolean seleccionado = rSCheckBox1.isSelected();
+        int inicio = currentPage * CLIENTES_POR_PAGINA;
+        int fin = Math.min(inicio + CLIENTES_POR_PAGINA, todasLasClientes.size());
+
+        for (int i = 0; i < model.getRowCount(); i++) {
+            model.setValueAt(seleccionado, i, 0);
+            seleccionados[inicio + i] = seleccionado;
+        }
+        actualizarEstadoBotonAccion();
+    }
+
+    private void buscarDinamico() {
+        String textoBusqueda = txtBuscar.getText().trim();
+        if (textoBusqueda.isEmpty()) {
+            todasLasClientes = new ArrayList<>(controlador.obtenerClientes());
+            seleccionados = new boolean[todasLasClientes.size()];
+            currentPage = 0;
+            mostrarPagina(currentPage);
+            return;
+        }
+
+        List<Cliente> resultados = controlador.buscarClientePorTodos(textoBusqueda);
+        if (!resultados.isEmpty()) {
+            todasLasClientes = new ArrayList<>(resultados);
+            seleccionados = new boolean[todasLasClientes.size()];
+            currentPage = 0;
+            mostrarPagina(currentPage);
+        } else {
+            JOptionPane.showMessageDialog(this, "No se encontraron clientes con el texto: " + textoBusqueda, "No encontrado", JOptionPane.WARNING_MESSAGE);
+            todasLasClientes = new ArrayList<>();
+            seleccionados = new boolean[todasLasClientes.size()];
+            mostrarPagina(currentPage);
+        }
+    }
+
+    class CustomCheckboxRenderer extends JPanel implements TableCellRenderer {
+        private final JCheckBox checkBox;
+
+        public CustomCheckboxRenderer() {
+            setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
+            setOpaque(true);
+            checkBox = new JCheckBox();
+            checkBox.setOpaque(true);
+            add(checkBox);
+            updateTheme();
+            TemaManager.getInstance().addThemeChangeListener(this::updateTheme);
+        }
+
+        private void updateTheme() {
+            boolean oscuro = TemaManager.getInstance().isOscuro();
+            Color fondo = oscuro ? new Color(21, 21, 33) : Color.WHITE;
+            setBackground(fondo);
+            checkBox.setBackground(fondo);
+            checkBox.setForeground(oscuro ? Color.WHITE : Color.BLACK);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            checkBox.setSelected(Boolean.TRUE.equals(value));
+            if (isSelected) {
+                setBackground(new Color(240, 240, 240));
+                checkBox.setBackground(new Color(240, 240, 240));
+            } else {
+                updateTheme();
+            }
+            return this;
+        }
+    }
+
+    class CustomCheckboxEditor extends DefaultCellEditor {
+        private final JCheckBox checkBox;
+
+        public CustomCheckboxEditor() {
+            super(new JCheckBox());
+            checkBox = (JCheckBox) getComponent();
+            checkBox.setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            boolean oscuro = TemaManager.getInstance().isOscuro();
+            checkBox.setBackground(oscuro ? new Color(21, 21, 33) : Color.WHITE);
+            checkBox.setSelected(Boolean.TRUE.equals(value));
+            return checkBox;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return checkBox.isSelected();
+        }
+    }
+
+    class StateCellRenderer extends JPanel implements TableCellRenderer {
+        private final RSLabelIcon stateIcon;
+
+        public StateCellRenderer() {
+            setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 0, 0));
+            setOpaque(true);
+            stateIcon = new RSLabelIcon();
+            stateIcon.setPreferredSize(new Dimension(20, 20));
+            add(stateIcon);
+            updateTheme();
+            TemaManager.getInstance().addThemeChangeListener(this::updateTheme);
+        }
+
+        private void updateTheme() {
+            boolean oscuro = TemaManager.getInstance().isOscuro();
+            setBackground(oscuro ? new Color(21, 21, 33) : Color.WHITE);
+            stateIcon.setBackground(getBackground());
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            String estado = value != null ? value.toString().toLowerCase() : "";
+            if (estado.equals("activo")) {
+                stateIcon.setIcons(ValoresEnum.ICONS.CHECK_CIRCLE);
+                stateIcon.setForeground(new Color(0, 102, 204));
+            } else if (estado.equals("inactivo")) {
+                stateIcon.setIcons(ValoresEnum.ICONS.CANCEL);
+                stateIcon.setForeground(Color.GRAY);
+            } else {
+                stateIcon.setIcons(ValoresEnum.ICONS.HELP);
+                stateIcon.setForeground(Color.BLACK);
+            }
+            if (isSelected) {
+                setBackground(table.getSelectionBackground());
+            } else {
+                updateTheme();
+            }
+            stateIcon.setBackground(getBackground());
+            return this;
+
+        }
+    }
+
     class ButtonPanelRenderer extends JPanel implements TableCellRenderer {
 
         private RSLabelIcon editIcon;
-        private RSLabelIcon deleteIcon;
+        private RSLabelIcon stateIcon;
 
         public ButtonPanelRenderer() {
             setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 2, 0));
             setOpaque(true);
-
             editIcon = new RSLabelIcon();
             editIcon.setIcons(ValoresEnum.ICONS.EDIT);
             editIcon.setToolTipText("Editar");
             editIcon.setPreferredSize(new Dimension(20, 20));
-
-            deleteIcon = new RSLabelIcon();
-            deleteIcon.setIcons(ValoresEnum.ICONS.DELETE);
-            deleteIcon.setToolTipText("Eliminar");
-            deleteIcon.setPreferredSize(new Dimension(20, 20));
-
+            stateIcon = new RSLabelIcon();
+            stateIcon.setPreferredSize(new Dimension(20, 20));
             add(editIcon);
-            add(deleteIcon);
-
+            add(stateIcon);
             updateTheme();
             TemaManager.getInstance().addThemeChangeListener(this::updateTheme);
         }
@@ -224,15 +555,35 @@ public class VistaClientes extends javax.swing.JPanel {
             Color fondo = oscuro ? new Color(21, 21, 33) : Color.WHITE;
             setBackground(fondo);
             editIcon.setBackground(oscuro ? new Color(67, 71, 120) : new Color(46, 49, 82));
+
             deleteIcon.setBackground(oscuro ? new Color(67, 71, 120) : new Color(46, 49, 82));
             editIcon.setForeground(new Color(21, 21, 33)); // Green for edit icon
 
             deleteIcon.setForeground(new Color(29, 30, 81)); // Color azul que pediste
+
+            stateIcon.setBackground(oscuro ? new Color(67, 71, 120) : new Color(46, 49, 82));
+            editIcon.setForeground(new Color(29, 30, 81));
+            stateIcon.setForeground(new Color(29, 30, 81));
+
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
+            String estado = table.getValueAt(row, 8) != null ? table.getValueAt(row, 8).toString().toLowerCase() : "";
+            if (estado.equals("activo")) {
+                stateIcon.setIcons(ValoresEnum.ICONS.CANCEL);
+                stateIcon.setForeground(Color.GRAY);
+                stateIcon.setToolTipText("Desactivar");
+            } else if (estado.equals("inactivo")) {
+                stateIcon.setIcons(ValoresEnum.ICONS.CHECK_CIRCLE);
+                stateIcon.setForeground(new Color(0, 102, 204));
+                stateIcon.setToolTipText("Activar");
+            } else {
+                stateIcon.setIcons(ValoresEnum.ICONS.HELP);
+                stateIcon.setForeground(Color.BLACK);
+                stateIcon.setToolTipText("Estado Desconocido");
+            }
             if (isSelected) {
                 setBackground(new Color(240, 240, 240));
             } else {
@@ -241,6 +592,7 @@ public class VistaClientes extends javax.swing.JPanel {
             return this;
         }
     }
+
 
     class CustomCheckboxRenderer extends JCheckBox implements TableCellRenderer {
 
@@ -304,9 +656,12 @@ public class VistaClientes extends javax.swing.JPanel {
     // In ButtonPanelEditor
     class ButtonPanelEditor extends DefaultCellEditor {
 
+
+    class ButtonPanelEditor extends DefaultCellEditor {
+
         private JPanel panel;
         private RSLabelIcon editIcon;
-        private RSLabelIcon deleteIcon;
+        private RSLabelIcon stateIcon;
         private String label;
         private boolean isPushed;
         private int selectedRow;
@@ -316,42 +671,53 @@ public class VistaClientes extends javax.swing.JPanel {
             panel = new JPanel();
             panel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.CENTER, 2, 0));
             panel.setOpaque(true);
-
             editIcon = new RSLabelIcon();
             editIcon.setIcons(ValoresEnum.ICONS.EDIT);
             editIcon.setToolTipText("Editar");
             editIcon.setPreferredSize(new Dimension(20, 20));
-
-            deleteIcon = new RSLabelIcon();
-            deleteIcon.setIcons(ValoresEnum.ICONS.DELETE);
-            deleteIcon.setToolTipText("Eliminar");
-            deleteIcon.setPreferredSize(new Dimension(20, 20));
-
+            stateIcon = new RSLabelIcon();
+            stateIcon.setPreferredSize(new Dimension(20, 20));
+            stateIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             panel.add(editIcon);
+
             panel.add(deleteIcon);
+
+            panel.add(stateIcon);
+
             editIcon.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     isPushed = true;
                     fireEditingStopped();
                     try {
+
                         String codigoStr = tablaclientes.getValueAt(selectedRow, 1).toString(); // Ajusta la columna si es diferente
+
+                        String codigoStr = tablaclientes.getValueAt(selectedRow, 1).toString();
+
                         if (codigoStr == null || codigoStr.trim().isEmpty()) {
                             JOptionPane.showMessageDialog(VistaClientes.this, "Código de cliente no válido.", "Error", JOptionPane.ERROR_MESSAGE);
                             return;
                         }
                         int codigo = Integer.parseInt(codigoStr);
+
                         System.out.println("Intentando editar cliente con código: " + codigo);
                         Cliente cliente = controlador.obtenerClientePorId(codigo);
                         System.out.println("Cliente obtenido: " + (cliente != null ? cliente.getNombre() : "null"));
                         if (cliente != null) {
                             System.out.println("Departamento: " + cliente.getDepartamento() + ", Municipio: " + cliente.getMunicipio() + ", Dirección: " + cliente.getDireccion());
+
+                        Cliente cliente = controlador.obtenerClientePorId(codigo);
+                        if (cliente != null) {
+
                             EditarCliente2 dialog = new EditarCliente2((JFrame) SwingUtilities.getWindowAncestor(VistaClientes.this), true, cliente);
                             dialog.setLocationRelativeTo(null);
                             dialog.setVisible(true);
                             if (dialog.isGuardado()) {
                                 cargartablaclientes();
+
                                 System.out.println("Cliente editado y tabla actualizada.");
+
                             }
                         } else {
                             JOptionPane.showMessageDialog(VistaClientes.this, "No se encontró el cliente con código: " + codigo, "Error", JOptionPane.ERROR_MESSAGE);
@@ -366,42 +732,54 @@ public class VistaClientes extends javax.swing.JPanel {
                 }
             });
 
-            deleteIcon.addMouseListener(new MouseAdapter() {
+            stateIcon.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     isPushed = true;
                     fireEditingStopped();
                     try {
                         int codigo = Integer.parseInt(tablaclientes.getValueAt(selectedRow, 1).toString());
-                        Ctrl_Cliente controlador = new Ctrl_Cliente();
+                        String estadoActual = tablaclientes.getValueAt(selectedRow, 8).toString().toLowerCase();
+                        boolean activar = estadoActual.equals("inactivo");
 
-                        if (controlador.tienePedidos(codigo)) {
-                            int opcion = JOptionPane.showConfirmDialog(VistaClientes.this,
-                                    "Este cliente tiene pedidos asociados. ¿Desea marcarlo como inactivo en lugar de eliminarlo?",
-                                    "Cliente con Pedidos", JOptionPane.YES_NO_OPTION);
-                            if (opcion == JOptionPane.YES_OPTION) {
-                                if (controlador.desactivar(codigo)) {
-                                    JOptionPane.showMessageDialog(VistaClientes.this, "Cliente marcado como inactivo.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
-                                    cargartablaclientes();
-                                } else {
-                                    JOptionPane.showMessageDialog(VistaClientes.this, "Error al marcar como inactivo.", "Error", JOptionPane.ERROR_MESSAGE);
-                                }
+                        if (activar) {
+                            if (controlador.activar(codigo)) {
+                                JOptionPane.showMessageDialog(VistaClientes.this, "Cliente activado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                                DefaultTableModel model = (DefaultTableModel) tablaclientes.getModel();
+                                model.setValueAt("Activo", selectedRow, 8);
+                            } else {
+                                JOptionPane.showMessageDialog(VistaClientes.this, "No se encontró el cliente o no se pudo activar.", "Error", JOptionPane.ERROR_MESSAGE);
                             }
                         } else {
-                            int confirm = JOptionPane.showConfirmDialog(VistaClientes.this,
-                                    "¿Está seguro de que desea eliminar el cliente con código " + codigo + "?",
-                                    "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
-                            if (confirm == JOptionPane.YES_OPTION) {
-                                if (controlador.eliminar(codigo)) {
-                                    JOptionPane.showMessageDialog(VistaClientes.this, "Cliente eliminado correctamente");
-                                    cargartablaclientes();
+                            if (controlador.tienePedidos(codigo)) {
+                                int opcion = JOptionPane.showConfirmDialog(VistaClientes.this,
+                                        "Este cliente tiene pedidos asociados. ¿Desea marcarlo como inactivo?",
+                                        "Cliente con Pedidos", JOptionPane.YES_NO_OPTION);
+                                if (opcion == JOptionPane.YES_OPTION) {
+                                    if (controlador.desactivar(codigo)) {
+                                        JOptionPane.showMessageDialog(VistaClientes.this, "Cliente desactivado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                                        DefaultTableModel model = (DefaultTableModel) tablaclientes.getModel();
+                                        model.setValueAt("Inactivo", selectedRow, 8);
+                                    } else {
+                                        JOptionPane.showMessageDialog(VistaClientes.this, "No se encontró el cliente o no se pudo desactivar.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                }
+                            } else {
+                                if (controlador.desactivar(codigo)) {
+                                    JOptionPane.showMessageDialog(VistaClientes.this, "Cliente desactivado exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                                    DefaultTableModel model = (DefaultTableModel) tablaclientes.getModel();
+                                    model.setValueAt("Inactivo", selectedRow, 8);
                                 } else {
-                                    JOptionPane.showMessageDialog(VistaClientes.this, "Error al eliminar el cliente");
+                                    JOptionPane.showMessageDialog(VistaClientes.this, "No se encontró el cliente o no se pudo desactivar.", "Error", JOptionPane.ERROR_MESSAGE);
                                 }
                             }
                         }
+                        tablaclientes.repaint();
+                        actualizarEstadoBotonAccion();
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(VistaClientes.this, "El código del cliente no es un número válido.", "Error", JOptionPane.ERROR_MESSAGE);
                     } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(VistaClientes.this, "Error al eliminar el cliente: " + ex.getMessage());
+                        JOptionPane.showMessageDialog(VistaClientes.this, "Error al cambiar el estado: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
@@ -412,12 +790,12 @@ public class VistaClientes extends javax.swing.JPanel {
 
         private void updateTheme() {
             boolean oscuro = TemaManager.getInstance().isOscuro();
-            Color bgColor = oscuro ? new Color(21, 21, 33) : Color.WHITE;
-            panel.setBackground(bgColor);
+            Color fondo = oscuro ? new Color(21, 21, 33) : Color.WHITE;
+            panel.setBackground(fondo);
             editIcon.setBackground(oscuro ? new Color(67, 71, 120) : new Color(46, 49, 82));
-            deleteIcon.setBackground(oscuro ? new Color(67, 71, 120) : new Color(46, 49, 82));
-            editIcon.setForeground(Color.GREEN);
-            deleteIcon.setForeground(Color.RED);
+            stateIcon.setBackground(oscuro ? new Color(67, 71, 120) : new Color(46, 49, 82));
+            editIcon.setForeground(new Color(29, 30, 81));
+            stateIcon.setForeground(new Color(29, 30, 81));
         }
 
         @Override
@@ -426,6 +804,24 @@ public class VistaClientes extends javax.swing.JPanel {
             label = (value == null) ? "" : value.toString();
             isPushed = true;
             selectedRow = row;
+
+            String estado = (row >= 0 && row < table.getRowCount() && table.getValueAt(row, 8) != null)
+                    ? table.getValueAt(row, 8).toString().toLowerCase()
+                    : "";
+            if (estado.equals("activo")) {
+                stateIcon.setIcons(ValoresEnum.ICONS.CANCEL);
+                stateIcon.setForeground(Color.GRAY);
+                stateIcon.setToolTipText("Desactivar");
+            } else if (estado.equals("inactivo")) {
+                stateIcon.setIcons(ValoresEnum.ICONS.CHECK_CIRCLE);
+                stateIcon.setForeground(new Color(0, 102, 204));
+                stateIcon.setToolTipText("Activar");
+            } else {
+                stateIcon.setIcons(ValoresEnum.ICONS.HELP);
+                stateIcon.setForeground(Color.BLACK);
+                stateIcon.setToolTipText("Estado Desconocido");
+            }
+
             if (row == table.getSelectedRow()) {
                 panel.setBackground(new Color(240, 240, 240));
             } else {
@@ -465,14 +861,22 @@ public class VistaClientes extends javax.swing.JPanel {
             txtBuscar.setColorIcon(texto);
             txtBuscar.setPhColor(Color.LIGHT_GRAY);
             paginacion.setBackground(texto);
+            rSCheckBox1.setForeground(texto);
+            rSCheckBox1.setColorCheck(texto);
+            rSCheckBox1.setColorUnCheck(texto);
+            rSButtonMaterialRippleIcon1.setBackground(fondo);
+
 
             rSCheckBox1.setForeground(new Color(255, 255, 255));
             rSCheckBox1.setColorCheck(new Color(255, 255, 255));
             rSCheckBox1.setColorUnCheck(new Color(255, 255, 255));
             rSButtonMaterialRippleIcon1.setBackground(new Color(21, 21, 33));
             tablaclientes.setBackground(new Color(21, 21, 33));
+
+            tablaclientes.setBackground(fondo);
+
             tablaclientes.setBackgoundHead(new Color(67, 71, 120));
-            tablaclientes.setForegroundHead(new Color(255, 255, 255));
+            tablaclientes.setForegroundHead(texto);
             tablaclientes.setBackgoundHover(new Color(40, 50, 90));
             tablaclientes.setFont(new Font("Tahoma", Font.PLAIN, 15));
             tablaclientes.setColorPrimary(new Color(37, 37, 52));
@@ -486,7 +890,7 @@ public class VistaClientes extends javax.swing.JPanel {
             tablaclientes.setFontRowSelect(new Font("Tahoma", Font.BOLD, 15));
             tablaclientes.setEffectHover(true);
             tablaclientes.setShowGrid(true);
-            tablaclientes.setGridColor(Color.WHITE); // o el color que desees
+            tablaclientes.setGridColor(Color.WHITE);
 
             btnNuevo1.setBackground(new Color(67, 71, 120));
             btnNuevo1.setBackgroundHover(new Color(118, 142, 240));
@@ -499,31 +903,36 @@ public class VistaClientes extends javax.swing.JPanel {
             rSCheckBox1.setForeground(new Color(21, 21, 33));
             rSCheckBox1.setColorCheck(new Color(21, 21, 33));
             rSCheckBox1.setColorUnCheck(new Color(21, 21, 33));
+
+            rSButtonMaterialRippleIcon1.setBackground(fondo);
+
             jPanel1.setBackground(fondo);
             txtBuscar.setBackground(fondo);
             txtBuscar.setForeground(texto);
             txtBuscar.setColorIcon(texto);
             txtBuscar.setPhColor(Color.GRAY);
+
             rSButtonMaterialRippleIcon1.setBackground(new Color(242, 247, 255));
 
-            tablaclientes.setBackground(new Color(255, 255, 255));
+
+            tablaclientes.setBackground(Color.WHITE);
             tablaclientes.setBackgoundHead(new Color(46, 49, 82));
             tablaclientes.setForegroundHead(Color.WHITE);
             tablaclientes.setBackgoundHover(new Color(67, 150, 209));
             tablaclientes.setFont(new Font("Tahoma", Font.PLAIN, 15));
             tablaclientes.setColorPrimary(new Color(242, 242, 242));
             tablaclientes.setColorPrimaryText(texto);
-            tablaclientes.setColorSecondary(new Color(255, 255, 255));
+            tablaclientes.setColorSecondary(Color.WHITE);
             tablaclientes.setColorSecundaryText(texto);
             tablaclientes.setColorBorderHead(primario);
-            tablaclientes.setColorBorderRows(new Color(0, 0, 0));
+            tablaclientes.setColorBorderRows(Color.BLACK);
             tablaclientes.setFontHead(new Font("Tahoma", Font.BOLD, 15));
             tablaclientes.setFontRowHover(new Font("Tahoma", Font.BOLD, 15));
             tablaclientes.setFontRowSelect(new Font("Tahoma", Font.BOLD, 15));
             tablaclientes.setEffectHover(true);
             tablaclientes.setSelectionBackground(new Color(67, 150, 209));
             tablaclientes.setShowGrid(true);
-            tablaclientes.setGridColor(Color.BLACK); // o el color que desees
+            tablaclientes.setGridColor(Color.BLACK);
 
             btnNuevo1.setBackground(new Color(46, 49, 82));
 
@@ -769,28 +1178,26 @@ public class VistaClientes extends javax.swing.JPanel {
     }//GEN-LAST:event_Añadir4ActionPerformed
 
     private void rSButtonMaterialRippleIcon1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rSButtonMaterialRippleIcon1ActionPerformed
+
         List<Integer> idsAEliminar = new ArrayList<>();
         List<String> nombresClientesAEliminar = new ArrayList<>();
         List<Integer> clientesConPedidos = new ArrayList<>();
         List<String> clientesConPedidosNombres = new ArrayList<>();
 
-        // Collect selected clients
+
         DefaultTableModel model = (DefaultTableModel) tablaclientes.getModel();
-        int inicio = currentPage * CLIENTES_POR_PAGINA;
+        List<Integer> seleccionadosIds = new ArrayList<>();
+        List<String> estados = new ArrayList<>();
+
         for (int i = 0; i < model.getRowCount(); i++) {
             if (Boolean.TRUE.equals(model.getValueAt(i, 0))) {
                 int id = Integer.parseInt(model.getValueAt(i, 1).toString());
-                String nombre = model.getValueAt(i, 3).toString() + " " + model.getValueAt(i, 4).toString();
-                if (controlador.tienePedidos(id)) {
-                    clientesConPedidos.add(id);
-                    clientesConPedidosNombres.add(nombre);
-                } else {
-                    idsAEliminar.add(id);
-                    nombresClientesAEliminar.add(nombre);
-                }
-                seleccionados[inicio + i] = false; // Deselect
+                String estado = model.getValueAt(i, 8).toString().toLowerCase();
+                seleccionadosIds.add(id);
+                estados.add(estado);
             }
         }
+
 
         // Handle clients with associated orders
         if (!clientesConPedidos.isEmpty()) {
@@ -804,9 +1211,29 @@ public class VistaClientes extends javax.swing.JPanel {
                         JOptionPane.showMessageDialog(this, "Cliente(s) marcados como inactivo(s).", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                     } else {
                         JOptionPane.showMessageDialog(this, "Error al marcar cliente(s) como inactivo(s).", "Error", JOptionPane.ERROR_MESSAGE);
+
+        boolean todosInactivos = estados.stream().allMatch("inactivo"::equals);
+        boolean todosActivos = estados.stream().allMatch("activo"::equals);
+
+        if (todosInactivos) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "¿Está seguro de que desea activar " + seleccionadosIds.size() + " cliente(s)?",
+                    "Confirmar activación", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean todosExitosos = true;
+                for (Integer id : seleccionadosIds) {
+                    if (!controlador.activar(id)) {
+                        todosExitosos = false;
+                        JOptionPane.showMessageDialog(this, "No se encontró el cliente con ID: " + id + " o no se pudo activar.", "Error", JOptionPane.ERROR_MESSAGE);
+
                     }
                 }
+                if (todosExitosos) {
+                    JOptionPane.showMessageDialog(this, "Cliente(s) activado(s) exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                }
+                cargartablaclientes();
             }
+
         }
 
         // Handle deletion of clients without orders
@@ -815,25 +1242,48 @@ public class VistaClientes extends javax.swing.JPanel {
                     + (idsAEliminar.size() > 1 ? "estos " + idsAEliminar.size() + " clientes?" : "este cliente?")
                     + "\nClientes: " + String.join(", ", nombresClientesAEliminar);
             int confirm = JOptionPane.showConfirmDialog(this, mensaje, "Confirmar eliminación", JOptionPane.YES_NO_OPTION);
+
+        } else if (todosActivos) {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "¿Está seguro de que desea desactivar " + seleccionadosIds.size() + " cliente(s)?",
+                    "Confirmar desactivación", JOptionPane.YES_NO_OPTION);
+
             if (confirm == JOptionPane.YES_OPTION) {
-                boolean todasEliminadas = true;
-                for (Integer id : idsAEliminar) {
-                    if (!controlador.eliminar(id)) {
-                        todasEliminadas = false;
-                        JOptionPane.showMessageDialog(this, "Error al eliminar el cliente con ID: " + id);
+                boolean todosExitosos = true;
+                for (Integer id : seleccionadosIds) {
+                    if (controlador.tienePedidos(id)) {
+                        int opcion = JOptionPane.showConfirmDialog(this,
+                                "El cliente con ID " + id + " tiene pedidos asociados. ¿Desea marcarlo como inactivo?",
+                                "Cliente con Pedidos", JOptionPane.YES_NO_OPTION);
+                        if (opcion == JOptionPane.YES_OPTION) {
+                            if (!controlador.desactivar(id)) {
+                                todosExitosos = false;
+                                JOptionPane.showMessageDialog(this, "No se encontró el cliente con ID: " + id + " o no se pudo desactivar.", "Error", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    } else {
+                        if (!controlador.desactivar(id)) {
+                            todosExitosos = false;
+                            JOptionPane.showMessageDialog(this, "No se encontró el cliente con ID: " + id + " o no se pudo desactivar.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                 }
-                if (todasEliminadas) {
-                    JOptionPane.showMessageDialog(this, "Cliente(s) eliminado(s) correctamente", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                if (todosExitosos) {
+                    JOptionPane.showMessageDialog(this, "Cliente(s) desactivado(s) exitosamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
                 }
-                todasLasClientes.removeIf(cliente -> idsAEliminar.contains(cliente.getId_cliente()));
-                mostrarPagina(currentPage);
+                cargartablaclientes();
             }
-        } else if (clientesConPedidos.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No hay clientes seleccionados para eliminar.", "Sin selección", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Seleccione solo clientes con el mismo estado (todos activos o todos inactivos).", "Error", JOptionPane.ERROR_MESSAGE);
         }
 
+
         rSCheckBox1.setSelected(false); // Reset "Seleccionar Todo"
+
+
+        rSCheckBox1.setSelected(false);
+        rSButtonMaterialRippleIcon1.setVisible(false);
+    
 
     }//GEN-LAST:event_rSButtonMaterialRippleIcon1ActionPerformed
 

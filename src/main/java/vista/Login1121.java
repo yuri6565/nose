@@ -286,56 +286,52 @@ public class Login1121 extends javax.swing.JFrame {
 
 
     private void autenticarUsuario() {
-        String nombreUsuario = txt_usuario.getText().trim();
-        String contrasena = new String(passtxt.getPassword()).trim();
+    String nombreUsuario = txt_usuario.getText().trim();
+    String contrasena = new String(passtxt.getPassword()).trim();
 
-        if (nombreUsuario.isEmpty() && contrasena.isEmpty()) {
-            LoginAlertaUsuario confirmDialog = new LoginAlertaUsuario((Frame) this.getParent(), true);
-        confirmDialog.setVisible(true);
+    if (nombreUsuario.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo de usuario no puede estar vacío.", "Error", JOptionPane.WARNING_MESSAGE);
+        txt_usuario.requestFocus();
         return;
-        } else if (nombreUsuario.isEmpty()) {
-              LoginAlertaUsuario confirmDialog = new LoginAlertaUsuario((Frame) this.getParent(), true);
-        confirmDialog.setVisible(true);
-        return;
-        } else if (contrasena.isEmpty()) {
-              LoginAlertaUsuario confirmDialog = new LoginAlertaUsuario((Frame) this.getParent(), true);
-        confirmDialog.setVisible(true);
-        return;
-        }
-
-        Contrl_login controlUsuario = new Contrl_login();
-        modelo.UsuarioModelo usuario = new modelo.UsuarioModelo();
-        usuario.setUsuario(nombreUsuario);
-        usuario.setContrasena(contrasena);
-
-        UsuarioModelo usuarioAutenticado = controlUsuario.loginUser(usuario);
-
-        if (usuarioAutenticado != null) {
-            JOptionPane.showMessageDialog(null, "Inicio de sesión exitoso", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
-
-            kla cargando = new kla(new JFrame(), true);
-            new Thread(() -> cargando.setVisible(true)).start();
-
-            int idUsuario = usuarioAutenticado.getId_usuario();
-            String rol = usuarioAutenticado.getRol(); // Obtener el rol
-
-            javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
-                cargando.dispose();
-                this.dispose();
-                if ("trabajador".equalsIgnoreCase(rol)) { // Verificar si es trabajador
-                    PrincipalTrap principalTrab = new PrincipalTrap(idUsuario);
-                    principalTrab.setVisible(true);
-                } else {
-                    Principal principal = new Principal(idUsuario);
-                    principal.setVisible(true);
-                }
-            });
-
-            timer.setRepeats(false);
-            timer.start();
-        } else {
-            LoginAlertaContrasenaIncorrecta confirmDialog = new LoginAlertaContrasenaIncorrecta((Frame) this.getParent(), true);
-        confirmDialog.setVisible(true);
-        }
     }
+
+    if (contrasena.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo de contraseña no puede estar vacío.", "Error", JOptionPane.WARNING_MESSAGE);
+        passtxt.requestFocus();
+        return;
+    }
+
+    Contrl_login controlUsuario = new Contrl_login();
+    UsuarioModelo usuario = new UsuarioModelo();
+    usuario.setUsuario(nombreUsuario);
+    usuario.setContrasena(contrasena);
+
+    UsuarioModelo usuarioAutenticado = controlUsuario.loginUser(usuario);
+
+    if (usuarioAutenticado != null) {
+        JOptionPane.showMessageDialog(this, "Inicio de sesión exitoso", "Bienvenido", JOptionPane.INFORMATION_MESSAGE);
+
+        kla cargando = new kla(new JFrame(), true);
+        new Thread(() -> cargando.setVisible(true)).start();
+
+        int idUsuario = usuarioAutenticado.getId_usuario();
+        String rol = usuarioAutenticado.getRol();
+
+        javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
+            cargando.dispose();
+            this.dispose();
+            if ("trabajador".equalsIgnoreCase(rol)) {
+                new PrincipalTrap(idUsuario).setVisible(true);
+            } else {
+                new Principal(idUsuario).setVisible(true);
+            }
+        });
+
+        timer.setRepeats(false);
+        timer.start();
+    } else {
+        JOptionPane.showMessageDialog(this, "Usuario o contraseña incorrectos. Verifica tus datos.", "Error de autenticación", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
 }

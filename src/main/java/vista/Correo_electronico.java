@@ -438,84 +438,74 @@ private void updateSuggestions() {
     private javax.swing.JTextField txtcorreo;
     // End of variables declaration//GEN-END:variables
 
-    
+   private void verificarCorreo() {
+    String correo = txtcorreo.getText().trim();
 
-    private void verificarCorreo() {
-        String correo = txtcorreo.getText().trim();
-
-        if (correo.isEmpty()) {
-            CodigoIncorrectoAlerta alerta = new CodigoIncorrectoAlerta((Frame) this, true);
-            alerta.setVisible(true);
-            return;
-        }
-
-        // Show first loading screen
-        cargando11 cargando = new cargando11(new JFrame(), true);
-        new Thread(() -> {
-            cargando.setVisible(true);
-        }).start();
-
-        javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
-            cargando.dispose();
-
-            Consulta_Usuarios consulta = new Consulta_Usuarios();
-            String usuario = consulta.obtenerCodigoDesdeCorreo(correo);
-
-            if (usuario != null) {
-                // Show "Correo electrónico encontrado con éxito"
-                JOptionPane.showMessageDialog(this, "Correo electrónico encontrado con éxito", "Confirmación", JOptionPane.INFORMATION_MESSAGE);
-
-                // Show second loading screen
-                cargando11 secondLoading = new cargando11(new JFrame(), true);
-                new Thread(() -> {
-                    secondLoading.setVisible(true);
-                }).start();
-
-                javax.swing.Timer secondTimer = new javax.swing.Timer(2000, secondE -> {
-                    secondLoading.dispose();
-
-                    String codigo = consulta.recuperarCuenta(usuario, correo);
-
-                    if (codigo != null) {
-                        Ctrl_Usuarios controlador = new Ctrl_Usuarios();
-                        controlador.enviarCodigoRecuperacion(usuario, correo);
-
-                        // Show "Código enviado con éxito al correo"
-                        JOptionPane.showMessageDialog(this, "Código enviado con éxito al correo " + correo, "Confirmación", JOptionPane.INFORMATION_MESSAGE);
-
-                        // Show final loading screen
-                        cargando11 finalLoading = new cargando11(new JFrame(), true);
-                        new Thread(() -> {
-                            finalLoading.setVisible(true);
-                        }).start();
-
-                        javax.swing.Timer finalTimer = new javax.swing.Timer(2000, finalE -> {
-                            finalLoading.dispose();
-
-                            // Transition to Contrasena3
-                            Contrasena3 ventana = new Contrasena3();
-                            ventana.setCorreoIngresado(correo);
-                            ventana.setVisible(true);
-                            dispose();
-                        });
-                        finalTimer.setRepeats(false);
-                        finalTimer.start();
-                    } else {
-                        CodigoIncorrectoAlerta alerta = new CodigoIncorrectoAlerta((Frame) this, true);
-                        alerta.setVisible(true);
-                    }
-                });
-                secondTimer.setRepeats(false);
-                secondTimer.start();
-            } else {
-                CodigoIncorrectoAlerta alerta = new CodigoIncorrectoAlerta((Frame) this, true);
-                alerta.setVisible(true);
-            }
-        });
-        timer.setRepeats(false);
-        timer.start();
+    // Validaciones básicas
+    if (correo.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "El campo de correo electrónico no puede estar vacío.", "Campo vacío", JOptionPane.WARNING_MESSAGE);
+        return;
     }
- 
+
+    if (!correo.contains("@") || !correo.contains(".")) {
+        JOptionPane.showMessageDialog(this, "El correo electrónico ingresado no es válido.", "Formato inválido", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    // Mostrar pantalla de carga inicial
+    cargando11 cargando = new cargando11(new JFrame(), true);
+    new Thread(() -> cargando.setVisible(true)).start();
+
+    javax.swing.Timer timer = new javax.swing.Timer(2000, e -> {
+        cargando.dispose();
+
+        Consulta_Usuarios consulta = new Consulta_Usuarios();
+        String usuario = consulta.obtenerCodigoDesdeCorreo(correo);
+
+        if (usuario != null) {
+            JOptionPane.showMessageDialog(this, "Correo electrónico encontrado con éxito", "Confirmación", JOptionPane.INFORMATION_MESSAGE);
+
+            cargando11 secondLoading = new cargando11(new JFrame(), true);
+            new Thread(() -> secondLoading.setVisible(true)).start();
+
+            javax.swing.Timer secondTimer = new javax.swing.Timer(2000, secondE -> {
+                secondLoading.dispose();
+
+                String codigo = consulta.recuperarCuenta(usuario, correo);
+
+                if (codigo != null) {
+                    Ctrl_Usuarios controlador = new Ctrl_Usuarios();
+                    controlador.enviarCodigoRecuperacion(correo, usuario, codigo);
+
+                    JOptionPane.showMessageDialog(this, "Código enviado con éxito al correo " + correo, "Confirmación", JOptionPane.INFORMATION_MESSAGE);
+
+                    cargando11 finalLoading = new cargando11(new JFrame(), true);
+                    new Thread(() -> finalLoading.setVisible(true)).start();
+
+                    javax.swing.Timer finalTimer = new javax.swing.Timer(2000, finalE -> {
+                        finalLoading.dispose();
+
+                        Contrasena3 ventana = new Contrasena3();
+                        ventana.setCorreoIngresado(correo);
+                        ventana.setVisible(true);
+                        dispose();
+                    });
+                    finalTimer.setRepeats(false);
+                    finalTimer.start();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Error al generar el código de recuperación.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+            secondTimer.setRepeats(false);
+            secondTimer.start();
+        } else {
+            JOptionPane.showMessageDialog(this, "El correo no está registrado en el sistema.", "Correo no encontrado", JOptionPane.ERROR_MESSAGE);
+        }
+    });
+    timer.setRepeats(false);
+    timer.start();
+}
+
 
 }
         

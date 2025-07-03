@@ -42,4 +42,6 @@ public class WhiteMenuItemUI extends BasicMenuItemUI {
         g2.setFont(menuItem.getFont());
         g2.drawString(text, textRect.x, textRect.y + g2.getFontMetrics().getAscent());
     }
+    
+    
 }
