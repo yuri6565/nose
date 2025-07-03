@@ -11,6 +11,7 @@ import controlador.Ctrl_MarcaMaterial;
 import controlador.Ctrl_UnidadMaterial;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -89,7 +90,11 @@ public class materiales extends javax.swing.JPanel {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
 
+        
+        
         scrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(8, 0));
         scrollPane.getVerticalScrollBar().setUI(new BasicScrollBarUI() {
             @Override
@@ -142,11 +147,127 @@ public class materiales extends javax.swing.JPanel {
             cmbCategoria.addItem(cat.getNombre());
         }
 
+        // Aplicar tema inicial
+        aplicarTema();
+
+        // Agregar listener para cambios de tema
+        TemaManager.getInstance().addThemeChangeListener(() -> aplicarTema());
+
         // Cargar materiales existentes al iniciar
         cargarMateriales();
 
     }
-    
+
+    // Método para aplicar el tema (oscuro o claro)
+    public void aplicarTema() {
+        boolean oscuro = TemaManager.getInstance().isOscuro();
+
+        Color fondo;
+        Color fondoTarjetas;
+        Color texto;
+        Color primario;
+        Color hover;
+
+        if (oscuro) {
+            fondo = new Color(21, 21, 33);
+            fondoTarjetas = new Color(50, 50, 65);
+            texto = Color.WHITE;
+            primario = new Color(67, 71, 120);
+            hover = new Color(118, 142, 240);
+        } else {
+            fondo = new Color(245, 246, 250);
+            fondoTarjetas = Color.WHITE;
+            texto = Color.BLACK;
+            primario = new Color(46, 49, 82);
+            hover = new Color(67, 150, 209);
+        }
+
+        // Aplicar colores a los paneles
+        setBackground(fondo);
+        panelprincipal.setBackground(fondo);
+        contenedorPrincipal.setBackground(fondo);
+        principalPanel.setBackground(fondo);
+
+        // Botones
+        categoria.setBackground(primario);
+        categoria.setBackgroundHover(hover);
+        marca.setBackground(primario);
+        marca.setBackgroundHover(hover);
+        unidadM.setBackground(primario);
+        unidadM.setBackgroundHover(hover);
+        btnNuevo.setBackground(primario); // Solo fondo, sin setBackgroundHover
+
+        // ComboBox
+        cmbCategoria.setBackground(fondo);
+        cmbCategoria.setForeground(texto);
+        cmbCategoria.setColorMaterial(oscuro ? new Color(200, 200, 200) : new Color(153, 153, 153));
+
+        // Campo de búsqueda
+        txtBuscar.setBackground(fondo);
+        txtBuscar.setForeground(texto);
+        txtBuscar.setColorIcon(texto);
+        txtBuscar.setColorMaterial(oscuro ? new Color(200, 200, 200) : new Color(153, 153, 153));
+        txtBuscar.setPhColor(oscuro ? new Color(150, 150, 150) : new Color(102, 102, 102));
+
+        // Actualizar tarjetas
+        actualizarColorTarjetas(fondoTarjetas, texto);
+
+        // Repintar componentes
+        repaint();
+        panelprincipal.repaint();
+        contenedorPrincipal.repaint();
+        principalPanel.repaint();
+        categoria.repaint();
+        marca.repaint();
+        unidadM.repaint();
+        btnNuevo.repaint();
+        cmbCategoria.repaint();
+        txtBuscar.repaint();
+    }
+
+    // Método para actualizar los colores de las tarjetas
+    private void actualizarColorTarjetas(Color fondoTarjetas, Color texto) {
+        for (Component comp : principalPanel.getComponents()) {
+            if (comp instanceof JPanel) {
+                JPanel tarjeta = (JPanel) comp;
+                JPanel panelInfo = (JPanel) tarjeta.getComponent(1);
+                panelInfo.setBackground(fondoTarjetas);
+                JLabel lblNombre = (JLabel) panelInfo.getComponent(0);
+                lblNombre.setForeground(texto);
+                JLabel lblCategoria = (JLabel) panelInfo.getComponent(1);
+                lblCategoria.setForeground(texto);
+                JLabel lblCantidad = (JLabel) panelInfo.getComponent(2);
+                MaterialDatos material = (MaterialDatos) tarjeta.getClientProperty("material");
+                try {
+                    double cantidad = Double.parseDouble(material.getCantidad().replace(",", "."));
+                    double stockMinimo = Double.parseDouble(material.getStockMinimo().replace(",", "."));
+                    if (cantidad <= stockMinimo) {
+                        lblCantidad.setForeground(new Color(255, 50, 50));
+                    } else if (cantidad <= stockMinimo * 1.3) {
+                        lblCantidad.setForeground(new Color(255, 165, 0));
+                    } else {
+                        lblCantidad.setForeground(new Color(50, 200, 50));
+                    }
+                } catch (NumberFormatException e) {
+                    lblCantidad.setForeground(texto);
+                }
+                JPanel panelImagen = (JPanel) tarjeta.getComponent(0);
+                panelImagen.setBackground(fondoTarjetas);
+                JPanel panelBotones = (JPanel) tarjeta.getComponent(2);
+                panelBotones.setBackground(fondoTarjetas);
+                RSButtonShape verBtn = (RSButtonShape) panelBotones.getComponent(0);
+                verBtn.setBackground(new Color(216, 246, 221));
+                verBtn.setBackgroundHover(new Color(188, 225, 193));
+                RSButtonShape editarBtn = (RSButtonShape) panelBotones.getComponent(1);
+                editarBtn.setBackground(new Color(189, 215, 252));
+                editarBtn.setBackgroundHover(new Color(166, 199, 245));
+                RSButtonShape eliminarBtn = (RSButtonShape) panelBotones.getComponent(2);
+                eliminarBtn.setBackground(new Color(242, 199, 207));
+                eliminarBtn.setBackgroundHover(new Color(242, 174, 188));
+                tarjeta.repaint();
+            }
+        }
+    }
 
     // Método para cargar los materiales desde la base de datos
     private void cargarMateriales() {
@@ -472,6 +593,7 @@ public class materiales extends javax.swing.JPanel {
         principalPanel = new javax.swing.JPanel();
         cmbCategoria = new RSMaterialComponent.RSComboBoxMaterial();
         txtBuscar = new RSMaterialComponent.RSTextFieldMaterialIcon();
+        btnNotificacion1 = new rojerusan.RSLabelIcon();
 
         setPreferredSize(new java.awt.Dimension(1290, 730));
         setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -557,6 +679,16 @@ public class materiales extends javax.swing.JPanel {
         });
         panelprincipal.add(txtBuscar, new org.netbeans.lib.awtextra.AbsoluteConstraints(40, 90, 390, 30));
 
+        btnNotificacion1.setBackground(new java.awt.Color(255, 255, 255));
+        btnNotificacion1.setForeground(new java.awt.Color(255, 255, 255));
+        btnNotificacion1.setIcons(rojeru_san.efectos.ValoresEnum.ICONS.TUNE);
+        btnNotificacion1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                btnNotificacion1MouseClicked(evt);
+            }
+        });
+        panelprincipal.add(btnNotificacion1, new org.netbeans.lib.awtextra.AbsoluteConstraints(750, 80, -1, 40));
+
         add(panelprincipal, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 1290, 730));
     }// </editor-fold>//GEN-END:initComponents
 
@@ -605,8 +737,15 @@ public class materiales extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtBuscarActionPerformed
 
+    private void btnNotificacion1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btnNotificacion1MouseClicked
+
+        //popupFiltros.show(btnNotificacion1, evt.getX(), evt.getY());
+
+    }//GEN-LAST:event_btnNotificacion1MouseClicked
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private rojerusan.RSLabelIcon btnNotificacion1;
     private rojeru_san.RSButtonRiple btnNuevo;
     private RSMaterialComponent.RSButtonShape categoria;
     private RSMaterialComponent.RSComboBoxMaterial cmbCategoria;

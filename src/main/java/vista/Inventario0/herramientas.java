@@ -11,6 +11,7 @@ import controlador.Ctrl_MarcaHerramienta;
 import controlador.Ctrl_UnidadHerramienta;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -42,6 +43,7 @@ import modelo.Categoria;
 import modelo.HerramientaDatos;
 import modelo.Marca;
 import modelo.Unidad;
+import vista.TemaManager;
 
 /**
  *
@@ -51,7 +53,7 @@ public class herramientas extends javax.swing.JPanel {
 
     private Ctrl_InventarioHerramienta ctrlInventario;
     private JPanel contenedorPrincipal;
-
+private boolean modoOscuro = false;
     /**
      * Creates new form herramientas
      */
@@ -139,10 +141,122 @@ public class herramientas extends javax.swing.JPanel {
         cargarMateriales();
     }
 
+   // Método para aplicar el tema (oscuro o claro)
+public void aplicarTema() {
+    boolean oscuro = TemaManager.getInstance().isOscuro();
+
+    Color fondo;
+    Color fondoTarjetas;
+    Color texto;
+    Color primario;
+    Color hover;
+
+    if (oscuro) {
+        fondo = new Color(21, 21, 33);
+        fondoTarjetas = new Color(50, 50, 65);
+        texto = Color.WHITE;
+        primario = new Color(67, 71, 120);
+        hover = new Color(118, 142, 240);
+    } else {
+        fondo = new Color(245, 246, 250);
+        fondoTarjetas = Color.WHITE;
+        texto = Color.BLACK;
+        primario = new Color(46, 49, 82);
+        hover = new Color(67, 150, 209);
+    }
+
+    // Aplicar colores a los paneles
+    setBackground(fondo);
+    panelprincipal.setBackground(fondo);
+    contenedorPrincipal.setBackground(fondo);
+    principalPanel.setBackground(fondo);
+
+    // Botones
+    btnCategoria.setBackground(primario);
+    btnCategoria.setBackgroundHover(hover);
+    btnMarcas.setBackground(primario);
+    btnMarcas.setBackgroundHover(hover);
+    btnUnidad.setBackground(primario);
+    btnUnidad.setBackgroundHover(hover);
+    btnNuevo.setBackground(primario); // Solo fondo, sin hover
+
+    // ComboBox
+    cmbCategoria.setBackground(fondo);
+    cmbCategoria.setForeground(texto);
+    cmbCategoria.setColorMaterial(oscuro ? new Color(200, 200, 200) : new Color(153, 153, 153));
+
+    // Campo de búsqueda
+    txtBuscar.setBackground(fondo);
+    txtBuscar.setForeground(texto);
+    txtBuscar.setColorIcon(texto);
+    txtBuscar.setColorMaterial(oscuro ? new Color(200, 200, 200) : new Color(153, 153, 153));
+    txtBuscar.setPhColor(oscuro ? new Color(150, 150, 150) : new Color(102, 102, 102));
+
+    // Actualizar tarjetas
+    actualizarColorTarjetas(fondoTarjetas, texto);
+
+    // Repintar componentes
+    repaint();
+    panelprincipal.repaint();
+    contenedorPrincipal.repaint();
+    principalPanel.repaint();
+    btnCategoria.repaint();
+    btnMarcas.repaint();
+    btnUnidad.repaint();
+    btnNuevo.repaint();
+    cmbCategoria.repaint();
+    txtBuscar.repaint();
+}
+
+// Método para actualizar los colores de las tarjetas
+private void actualizarColorTarjetas(Color fondoTarjetas, Color texto) {
+    for (Component comp : principalPanel.getComponents()) {
+        if (comp instanceof JPanel) {
+            JPanel tarjeta = (JPanel) comp;
+            JPanel panelInfo = (JPanel) tarjeta.getComponent(1);
+            panelInfo.setBackground(fondoTarjetas);
+            JLabel lblNombre = (JLabel) panelInfo.getComponent(0);
+            lblNombre.setForeground(texto);
+            JLabel lblCategoria = (JLabel) panelInfo.getComponent(1);
+            lblCategoria.setForeground(texto);
+            JLabel lblEstado = (JLabel) panelInfo.getComponent(2);
+            HerramientaDatos material = (HerramientaDatos) tarjeta.getClientProperty("material");
+            if (material.getEstado() != null) {
+                String estado = material.getEstado().toLowerCase();
+                if (estado.contains("disponible")) {
+                    lblEstado.setForeground(new Color(50, 200, 50));
+                } else if (estado.contains("reparación") || estado.contains("reparacion")) {
+                    lblEstado.setForeground(new Color(255, 140, 0));
+                } else if (estado.contains("dañado") || estado.contains("danado")) {
+                    lblEstado.setForeground(new Color(255, 50, 50));
+                } else {
+                    lblEstado.setForeground(texto);
+                }
+            } else {
+                lblEstado.setForeground(texto);
+            }
+            JPanel panelImagen = (JPanel) tarjeta.getComponent(0);
+            panelImagen.setBackground(fondoTarjetas);
+            JPanel panelBotones = (JPanel) tarjeta.getComponent(2);
+            panelBotones.setBackground(fondoTarjetas);
+            RSButtonShape verBtn = (RSButtonShape) panelBotones.getComponent(0);
+            verBtn.setBackground(new Color(216, 246, 221));
+            verBtn.setBackgroundHover(new Color(188, 225, 193));
+            RSButtonShape editarBtn = (RSButtonShape) panelBotones.getComponent(1);
+            editarBtn.setBackground(new Color(189, 215, 252));
+            editarBtn.setBackgroundHover(new Color(166, 199, 245));
+            RSButtonShape eliminarBtn = (RSButtonShape) panelBotones.getComponent(2);
+            eliminarBtn.setBackground(new Color(242, 199, 207));
+            eliminarBtn.setBackgroundHover(new Color(242, 174, 188));
+            tarjeta.repaint();
+        }
+    }
+}
+
+
     // Método para cargar los materiales desde la base de datos
     private void cargarMateriales() {
         principalPanel.removeAll();
-        // Cambiar a FlowLayout alineado a la izquierda
         principalPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
 
         List<Ctrl_InventarioHerramienta.MaterialConDetalles> materiales = ctrlInventario.obtenerMateriales();
@@ -154,6 +268,15 @@ public class herramientas extends javax.swing.JPanel {
                     materialConDetalles.getNombreUnidadMedida()
             );
         }
+
+        // Ajustar el tamaño del principalPanel dinámicamente
+        int totalTarjetas = principalPanel.getComponentCount();
+        int tarjetasPorFila = 5;
+        int filas = (int) Math.ceil((double) totalTarjetas / tarjetasPorFila);
+        int tarjetaHeight = 310;
+        int totalHeight = filas * tarjetaHeight + 20; // Añadir margen
+        principalPanel.setPreferredSize(new Dimension(1130, Math.max(totalHeight, 560))); // Ajuste de ancho a 1130
+
         principalPanel.revalidate();
         principalPanel.repaint();
         if (principalPanel.getParent() instanceof JViewport) {
